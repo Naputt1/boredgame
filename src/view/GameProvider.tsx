@@ -7,10 +7,10 @@ import {
   useRef,
   useState
 } from "react";
-import { GameEngine, SyncMode, createGameEngine } from "../engine";
-import { createInitialState, GameState } from "../core";
-import { GameAction } from "../schemas";
-import { GameTransport } from "../transport";
+import { GameEngine, SyncMode, createGameEngine } from "@boredgame/engine";
+import { createInitialState, GameState } from "@boredgame/core";
+import { GameAction } from "@boredgame/schemas";
+import { GameTransport } from "@boredgame/transport";
 
 type GameProviderProps = {
   children: ReactNode;

@@ -2,7 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { GameProvider, GameScreen } from "./view";
 import { useDiscordContext } from "./platform/discord";
-import { LocalTransport } from "./transport";
+import { LocalTransport } from "@boredgame/transport";
 import "./styles.css";
 
 const App = () => {

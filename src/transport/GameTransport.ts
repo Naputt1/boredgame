@@ -1,5 +1,5 @@
-import { GameState } from "../core/state";
-import { GameAction } from "../schemas/actions";
+import { GameState } from "@boredgame/core";
+import { GameAction } from "@boredgame/schemas";
 
 export type Unsubscribe = () => void;
 

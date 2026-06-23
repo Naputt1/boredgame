@@ -1,4 +1,4 @@
-import { GameAction } from "../schemas/actions";
+import { GameAction } from "@boredgame/schemas";
 import { createInitialState, GameState, isInsideBoard } from "./state";
 
 const appendAppliedActionId = (

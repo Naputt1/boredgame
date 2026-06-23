@@ -1,8 +1,6 @@
-import { gameReducer } from "../core/reducer";
-import { createInitialState, GameState } from "../core/state";
-import { GameAction, parseGameAction } from "../schemas/actions";
-import { parseGameState } from "../schemas/state";
-import { GameTransport, Unsubscribe } from "../transport/GameTransport";
+import { gameReducer, createInitialState, GameState } from "@boredgame/core";
+import { GameAction, parseGameAction, parseGameState } from "@boredgame/schemas";
+import { GameTransport, Unsubscribe } from "@boredgame/transport";
 
 export type SyncMode = "action" | "state";
 

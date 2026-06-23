@@ -1,5 +1,5 @@
-import { GameAction } from "../schemas/actions";
-import { GameState } from "../core/state";
+import { GameAction } from "@boredgame/schemas";
+import { GameState } from "@boredgame/core";
 import { GameTransport, Unsubscribe } from "./GameTransport";
 
 export class LocalTransport implements GameTransport {

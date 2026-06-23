@@ -2,6 +2,7 @@
   "name": "boredgame",
   "version": "0.1.0",
   "private": true,
+  "packageManager": "pnpm@11.6.0",
   "type": "module",
   "scripts": {
     "dev": "vite --host 127.0.0.1",
@@ -9,6 +10,14 @@
     "preview": "vite preview --host 127.0.0.1",
     "test": "vitest run",
     "test:watch": "vitest"
+  },
+  "exports": {
+    "./core": "./src/core/index.ts",
+    "./engine": "./src/engine/index.ts",
+    "./schemas": "./src/schemas/index.ts",
+    "./transport": "./src/transport/index.ts",
+    "./view": "./src/view/index.ts",
+    "./platform": "./src/platform/index.ts"
   },
   "dependencies": {
     "@pixi/react": "^7.1.2",
@@ -21,6 +30,7 @@
     "@types/react": "^18.3.18",
     "@types/react-dom": "^18.3.5",
     "@vitejs/plugin-react": "^4.3.4",
+    "turbo": "^2",
     "typescript": "^5.7.3",
     "vite": "^6.0.7",
     "vitest": "^2.1.8"

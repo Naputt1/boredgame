@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { createInitialState, gameReducer, replayActions } from ".";
-import { GAME_ACTION_VERSION, GameAction } from "../schemas";
+import { GAME_ACTION_VERSION, GameAction } from "@boredgame/schemas";
 
 const meta = (actionId: string, playerId = "player-1"): GameAction["meta"] => ({
   playerId,
@@ -86,5 +86,54 @@ describe("gameReducer", () => {
     expect(reset.players).toEqual({});
     expect(reset.tokens).toEqual({});
     expect(reset.appliedActionIds).toEqual(["reset-1"]);
+  });
+
+  it("rejects move for nonexistent token", () => {
+    const state = createInitialState();
+    const result = gameReducer(state, moveAction("no-token-move", 4, 5));
+
+    expect(result.tokens).toEqual({});
+    expect(result.appliedActionIds).toContain("no-token-move");
+  });
+
+  it("produces different results for different action orderings", () => {
+    const actionsA = [joinAction("a-join"), moveAction("a-move", 4, 5)];
+    const actionsB = [moveAction("b-move", 4, 5), joinAction("b-join")];
+    const resultA = replayActions(createInitialState(), actionsA);
+    const resultB = replayActions(createInitialState(), actionsB);
+
+    expect(resultA.tokens["token-1"]?.position).toEqual({ x: 4, y: 5 });
+    expect(resultB.tokens["token-1"]?.position).toEqual({ x: 0, y: 0 });
+    expect(resultA.appliedActionIds).toEqual(["a-join", "a-move"]);
+    expect(resultB.appliedActionIds).toEqual(["b-move", "b-join"]);
+  });
+
+  it("does not perform version validation (delegated to schema parser)", () => {
+    const state = createInitialState();
+    const result = gameReducer(state, {
+      ...joinAction("bad-version"),
+      version: 999
+    });
+
+    expect(result.players["player-1"]?.name).toBe("Player 1");
+  });
+
+  it("returns same state for empty action list in replay", () => {
+    const state = createInitialState();
+    const result = replayActions(state, []);
+
+    expect(result).toBe(state);
+  });
+
+  it("does not mutate inputs during replay", () => {
+    const initialState = createInitialState();
+    const action = joinAction("immutable-1");
+    const actions: readonly GameAction[] = [action];
+    const actionSnapshot = { ...action, meta: { ...action.meta } };
+
+    replayActions(initialState, actions);
+
+    expect(initialState).toEqual(createInitialState());
+    expect(action).toEqual(actionSnapshot);
   });
 });

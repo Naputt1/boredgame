@@ -1,6 +1,6 @@
 import { Container, Graphics, Stage, Text } from "@pixi/react";
 import { Graphics as PixiGraphics, TextStyle } from "pixi.js";
-import { GameState } from "../core";
+import { GameState } from "@boredgame/core";
 
 type BoardStageProps = {
   state: GameState;

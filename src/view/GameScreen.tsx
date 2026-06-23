@@ -1,16 +1,14 @@
 import { useEffect, useMemo } from "react";
-import { GAME_ACTION_VERSION, GameAction } from "../schemas";
-import { BoardPosition } from "../core";
+import {
+  createPlayerJoinedAction,
+  createTokenMovedAction,
+  createGameResetAction
+} from "@boredgame/schemas";
+import { BoardPosition } from "@boredgame/core";
 import { BoardStage } from "./BoardStage";
 import { useGame } from "./GameProvider";
 
 const playerPalette = ["#2563eb", "#dc2626", "#059669", "#d97706", "#7c3aed"];
-
-const createActionMeta = (playerId: string): GameAction["meta"] => ({
-  playerId,
-  timestamp: Date.now(),
-  actionId: window.crypto?.randomUUID?.() ?? `${playerId}-${Date.now()}-${Math.random()}`
-});
 
 const playerName = (playerId: string): string => `Player ${playerId.slice(0, 4)}`;
 
@@ -27,18 +25,15 @@ export const GameScreen = () => {
     }
 
     const playerIndex = Object.keys(state.players).length % playerPalette.length;
-    sendAction({
-      type: "player.joined",
-      version: GAME_ACTION_VERSION,
-      payload: {
+    sendAction(
+      createPlayerJoinedAction(
         playerId,
-        name: playerName(playerId),
-        color: playerPalette[playerIndex],
-        tokenId: `token:${playerId}`,
-        startPosition: { x: playerIndex, y: playerIndex }
-      },
-      meta: createActionMeta(playerId)
-    });
+        playerName(playerId),
+        playerPalette[playerIndex],
+        `token:${playerId}`,
+        { x: playerIndex, y: playerIndex }
+      )
+    );
   }, [connected, playerId, sendAction, state.players]);
 
   const moveToken = (to: BoardPosition) => {
@@ -46,24 +41,11 @@ export const GameScreen = () => {
       return;
     }
 
-    sendAction({
-      type: "token.moved",
-      version: GAME_ACTION_VERSION,
-      payload: {
-        tokenId: ownToken.id,
-        to
-      },
-      meta: createActionMeta(playerId)
-    });
+    sendAction(createTokenMovedAction(playerId, ownToken.id, to));
   };
 
   const resetGame = () => {
-    sendAction({
-      type: "game.reset",
-      version: GAME_ACTION_VERSION,
-      payload: {},
-      meta: createActionMeta(playerId)
-    });
+    sendAction(createGameResetAction(playerId));
   };
 
   return (
