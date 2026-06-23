@@ -7,7 +7,7 @@ import type {
 } from "./actions";
 
 const makeActionId = (playerId: string): string =>
-  window.crypto?.randomUUID?.() ?? `${playerId}-${Date.now()}-${Math.random()}`;
+  globalThis.crypto?.randomUUID?.() ?? `${playerId}-${Date.now()}-${Math.random()}`;
 
 export const createActionMeta = (playerId: string): GameAction["meta"] => ({
   playerId,

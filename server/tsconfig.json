@@ -1,0 +1,24 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022"],
+    "allowJs": false,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "paths": {
+      "@boredgame/core": ["../src/core/index.ts"],
+      "@boredgame/engine": ["../src/engine/index.ts"],
+      "@boredgame/schemas": ["../src/schemas/index.ts"],
+      "@boredgame/transport": ["../src/transport/index.ts"]
+    }
+  },
+  "include": ["src"]
+}

@@ -1,5 +1,6 @@
 packages:
   - "sample-project"
+  - "server"
 
 allowBuilds:
   esbuild: true
