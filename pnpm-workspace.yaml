@@ -1,2 +1,5 @@
+packages:
+  - "sample-project"
+
 allowBuilds:
   esbuild: true

@@ -5,9 +5,8 @@
   "packageManager": "pnpm@11.6.0",
   "type": "module",
   "scripts": {
-    "dev": "vite --host 127.0.0.1",
+    "dev:sample": "pnpm --filter sample-project dev",
     "build": "tsc -b && vite build",
-    "preview": "vite preview --host 127.0.0.1",
     "test": "vitest run",
     "test:watch": "vitest"
   },
@@ -15,9 +14,7 @@
     "./core": "./src/core/index.ts",
     "./engine": "./src/engine/index.ts",
     "./schemas": "./src/schemas/index.ts",
-    "./transport": "./src/transport/index.ts",
-    "./view": "./src/view/index.ts",
-    "./platform": "./src/platform/index.ts"
+    "./transport": "./src/transport/index.ts"
   },
   "dependencies": {
     "@pixi/react": "^7.1.2",
