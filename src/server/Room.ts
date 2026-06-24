@@ -5,8 +5,6 @@ import {
   type ServerMessage,
   WSPROTO_VERSION
 } from "@boredgame/transport";
-import { validateAuthoritativeAction } from "@boredgame/demo-game";
-import type { ValidationResult } from "@boredgame/demo-game";
 
 type ConnectedPlayer = {
   playerId: string;
@@ -106,18 +104,16 @@ export class Room {
       return;
     }
 
-    const result = validateAuthoritativeAction(
-      action as Parameters<typeof validateAuthoritativeAction>[0],
-      this.state as Parameters<typeof validateAuthoritativeAction>[1],
-      senderPlayerId
-    ) as ValidationResult;
+    if (this.definition.validateAction) {
+      const result = this.definition.validateAction(action, this.state, senderPlayerId);
 
-    if (!result.valid) {
-      this.sendToPlayer(senderPlayerId, {
-        type: "error",
-        payload: { code: result.code, message: result.message }
-      });
-      return;
+      if (!result.valid) {
+        this.sendToPlayer(senderPlayerId, {
+          type: "error",
+          payload: { code: result.code, message: result.message }
+        });
+        return;
+      }
     }
 
     this.actionLog.push(action);

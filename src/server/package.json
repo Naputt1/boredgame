@@ -11,6 +11,8 @@
     "@boredgame/core": "workspace:*",
     "@boredgame/demo-game": "workspace:*",
     "@boredgame/transport": "workspace:*",
+    "@boredgame/registry": "workspace:*",
+    "@boredgame/tic-tac-toe": "workspace:*",
     "ws": "^8.18.1"
   },
   "devDependencies": {

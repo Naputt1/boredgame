@@ -11,6 +11,7 @@ import {
 export type WebSocketTransportOptions = {
   url: string;
   playerId: string;
+  gameId: string;
   maxReconnectAttempts?: number;
   reconnectBaseDelayMs?: number;
   fullSnapshotThreshold?: number;
@@ -43,10 +44,12 @@ export class WebSocketTransport implements GameTransport {
 
   private url: string;
   private playerId: string;
+  private gameId: string;
 
   constructor(options: WebSocketTransportOptions) {
     this.url = options.url;
     this.playerId = options.playerId;
+    this.gameId = options.gameId;
     this.maxReconnectAttempts = options.maxReconnectAttempts ?? 5;
     this.reconnectBaseDelayMs = options.reconnectBaseDelayMs ?? 1000;
     this.fullSnapshotThreshold = options.fullSnapshotThreshold ?? 50;
@@ -196,6 +199,7 @@ export class WebSocketTransport implements GameTransport {
     this.send({
       type: "join-room",
       payload: {
+        gameId: this.gameId,
         playerId: this.playerId,
         syncMode: this.syncMode,
         knownActionIds: this.knownActionIds,

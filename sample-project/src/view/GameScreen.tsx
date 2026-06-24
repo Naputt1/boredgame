@@ -1,15 +1,13 @@
-import { demoGameDefinition } from "@boredgame/demo-game";
-import type { DemoGameState, DemoGameAction } from "@boredgame/demo-game";
 import { useGame } from "@boredgame/react";
-import { DevtoolsPanel } from "@boredgame/devtools";
-import type { ActionLog } from "@boredgame/devtools";
 import { ConnectionBanner } from "./ConnectionBanner";
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type GameScreenProps = {
-  actionLog: ActionLog<DemoGameAction>;
+  definition: any;
+  onBack: () => void;
 };
 
-export const GameScreen = ({ actionLog }: GameScreenProps) => {
+export const GameScreen = ({ definition, onBack }: GameScreenProps) => {
   const {
     state,
     sendAction,
@@ -18,9 +16,9 @@ export const GameScreen = ({ actionLog }: GameScreenProps) => {
     playerId,
     roomId,
     participants
-  } = useGame<DemoGameState, DemoGameAction>();
+  } = useGame();
 
-  const Renderer = demoGameDefinition.renderer;
+  const Renderer = definition.renderer;
 
   return (
     <>
@@ -28,10 +26,13 @@ export const GameScreen = ({ actionLog }: GameScreenProps) => {
       <main className="app-shell">
         <section className="game-toolbar" aria-label="Game controls">
           <div>
-            <p className="eyebrow">Discord-ready board framework</p>
-            <h1>Boredgame</h1>
+            <p className="eyebrow">{definition.metadata.description}</p>
+            <h1>{definition.name}</h1>
           </div>
           <div className="toolbar-meta">
+            <button type="button" onClick={onBack} style={{ fontSize: 12, padding: "4px 12px" }}>
+              Back to games
+            </button>
             <span>
               {connectionStatus.state === "connected"
                 ? "Connected"
@@ -51,14 +52,6 @@ export const GameScreen = ({ actionLog }: GameScreenProps) => {
           connected={connected}
         />
       </main>
-
-      {import.meta.env.DEV && (
-        <DevtoolsPanel
-          actionLog={actionLog}
-          reducer={demoGameDefinition.reducer as (state: unknown, action: DemoGameAction) => unknown}
-          createInitialState={demoGameDefinition.createInitialState as () => unknown}
-        />
-      )}
     </>
   );
 };

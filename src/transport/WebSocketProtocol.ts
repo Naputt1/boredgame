@@ -10,6 +10,7 @@ export type VersionRange = {
 };
 
 export type JoinRoomPayload = {
+  gameId: string;
   playerId: string;
   syncMode: SyncMode;
   knownActionIds: string[];

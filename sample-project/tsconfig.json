@@ -21,7 +21,9 @@
       "@boredgame/engine": ["../src/engine"],
       "@boredgame/react": ["../src/react"],
       "@boredgame/transport": ["../src/transport"],
-      "@boredgame/platform": ["../src/platform/src/discord/index.ts"]
+      "@boredgame/platform": ["../src/platform/src/discord/index.ts"],
+      "@boredgame/registry": ["../src/registry"],
+      "@boredgame/tic-tac-toe": ["../src/tic-tac-toe"]
     }
   },
   "include": ["src"]

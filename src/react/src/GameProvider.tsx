@@ -58,6 +58,9 @@ const createLoggingMiddleware = (): GameEngineMiddleware => ({
   }
 });
 
+const EMPTY_MIDDLEWARE: GameEngineMiddleware[] = [];
+const EMPTY_PARTICIPANTS: GameParticipant[] = [];
+
 export const GameProvider = <TState, TAction>({
   children,
   definition,
@@ -66,8 +69,8 @@ export const GameProvider = <TState, TAction>({
   transport,
   syncMode = "action",
   initialState,
-  participants = [],
-  middleware = []
+  participants = EMPTY_PARTICIPANTS,
+  middleware = EMPTY_MIDDLEWARE
 }: GameProviderProps<TState, TAction>) => {
   const initialStateRef = useRef(initialState ?? definition.createInitialState());
   const [state, setState] = useState(initialStateRef.current);

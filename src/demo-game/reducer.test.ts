@@ -113,7 +113,7 @@ describe("demoGameReducer", () => {
     const result = demoGameReducer(state, {
       ...joinAction("bad-version"),
       version: 999
-    });
+    } as unknown as import("./actions").DemoGameAction);
 
     expect(result.players["player-1"]?.name).toBe("Player 1");
   });

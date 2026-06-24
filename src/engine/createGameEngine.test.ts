@@ -10,7 +10,7 @@ type TestState = {
 
 type TestAction = {
   type: "increment";
-  version: number;
+  version: 1;
   payload: { by: number };
   meta: { actionId: string; playerId: string; timestamp: number };
 };
@@ -18,6 +18,8 @@ type TestAction = {
 const testDefinition = {
   id: "test",
   name: "Test Game",
+  version: { engine: "0.1.0", state: "1.0.0", actionSchema: "1.0.0" },
+  metadata: { description: "Test game", minPlayers: 1, maxPlayers: 4 },
   createInitialState: (): TestState => ({
     count: 0,
     appliedActionIds: []
@@ -102,6 +104,7 @@ describe("createGameEngine", () => {
 
     await engine.connect("room-1");
     engine.sendAction({ ...incrementAction(), version: 999 } as unknown as TestAction);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
 
     expect(onError).toHaveBeenCalledTimes(1);
     expect(engine.getState()).toEqual(testDefinition.createInitialState());

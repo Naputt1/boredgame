@@ -1,15 +1,15 @@
 {
-  "name": "@boredgame/react",
+  "name": "@boredgame/tic-tac-toe",
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "main": "src/index.ts",
-  "types": "src/index.ts",
+  "exports": {
+    ".": "./index.ts",
+    "./*": "./*"
+  },
   "dependencies": {
     "@boredgame/core": "workspace:*",
-    "@boredgame/engine": "workspace:*",
-    "@boredgame/registry": "workspace:*",
-    "@boredgame/transport": "workspace:*"
+    "zod": "^3.25.76"
   },
   "peerDependencies": {
     "react": "^18"

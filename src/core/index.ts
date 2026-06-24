@@ -3,5 +3,9 @@ export type {
   GameEngineMiddleware,
   Unsubscribe,
   GameRendererProps,
-  GameDefinition
+  GameDefinition,
+  VersionCompat,
+  GameMetadata,
+  GameAssets,
+  ServerValidationResult
 } from "./gameDefinition";

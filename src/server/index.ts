@@ -1,4 +1,5 @@
 import { WebSocketServer, WebSocket } from "ws";
+import type { GameDefinition } from "@boredgame/core";
 import {
   type ClientMessage,
   type Envelope,
@@ -6,8 +7,13 @@ import {
   WSPROTO_MIN_VERSION,
   WSPROTO_MAX_VERSION
 } from "@boredgame/transport";
+import { GameRegistry } from "@boredgame/registry";
 import { demoGameDefinition } from "@boredgame/demo-game";
+import { ticTacToeDefinition } from "@boredgame/tic-tac-toe";
 import { Room } from "./Room";
+
+const gameRegistry = new GameRegistry();
+gameRegistry.registerAll([demoGameDefinition, ticTacToeDefinition]);
 
 const PORT = Number(process.env.PORT ?? 3001);
 
@@ -57,7 +63,14 @@ wss.on("connection", (socket: WebSocket, req) => {
 
       negotiatedVersion = Math.min(clientMax, WSPROTO_MAX_VERSION);
 
-      const room = getOrCreateRoom(roomId);
+      const gameDef = gameRegistry.get(msg.payload.gameId);
+      if (!gameDef) {
+        sendError(socket, "UNKNOWN_GAME", `Unknown game "${msg.payload.gameId}"`);
+        socket.close();
+        return;
+      }
+
+      const room = getOrCreateRoom(roomId, gameDef);
       room.join(socket, msg.payload.playerId, msg.payload.syncMode, msg.payload.knownActionIds, negotiatedVersion);
 
       sendEnvelope(socket, negotiatedVersion, 0, {
@@ -74,7 +87,12 @@ wss.on("connection", (socket: WebSocket, req) => {
 
     switch (msg.type) {
       case "join-room": {
-        const room = getOrCreateRoom(roomId);
+        const gameDef = gameRegistry.get(msg.payload.gameId);
+        if (!gameDef) {
+          sendError(socket, "UNKNOWN_GAME", `Unknown game "${msg.payload.gameId}"`);
+          return;
+        }
+        const room = getOrCreateRoom(roomId, gameDef);
         room.join(socket, msg.payload.playerId, msg.payload.syncMode, msg.payload.knownActionIds);
         break;
       }
@@ -106,11 +124,14 @@ wss.on("connection", (socket: WebSocket, req) => {
   });
 });
 
-function getOrCreateRoom(roomId: string): Room {
+function getOrCreateRoom(roomId: string, definition?: GameDefinition<unknown, unknown>): Room {
   let room = rooms.get(roomId);
 
   if (!room) {
-    room = new Room(roomId, demoGameDefinition);
+    if (!definition) {
+      throw new Error(`Room "${roomId}" does not exist. Provide a game definition to create it.`);
+    }
+    room = new Room(roomId, definition);
     rooms.set(roomId, room);
   }
 

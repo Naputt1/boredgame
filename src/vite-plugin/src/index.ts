@@ -35,7 +35,7 @@ function generateTransportModule(transport: BoredgamePluginOptions["transport"])
       ``,
       `export const createTransport = (opts) => {`,
       `  const url = opts.url ?? import.meta.env.VITE_WS_URL ?? "ws://localhost:3001";`,
-      `  return new WebSocketTransport({ url, playerId: opts.playerId });`,
+      `  return new WebSocketTransport({ url, playerId: opts.playerId, gameId: opts.gameId });`,
       `};`,
     ].join("\n");
   }
@@ -44,7 +44,7 @@ function generateTransportModule(transport: BoredgamePluginOptions["transport"])
     `import { P2PTransport } from "@boredgame/transport";`,
     ``,
     `export const createTransport = (opts) => {`,
-    `  return new P2PTransport({ instanceId: opts.instanceId });`,
+    `  return new P2PTransport({ instanceId: opts.instanceId, gameId: opts.gameId });`,
     `};`,
   ].join("\n");
 }

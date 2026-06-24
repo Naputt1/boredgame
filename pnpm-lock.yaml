@@ -41,6 +41,12 @@ importers:
       '@boredgame/react':
         specifier: workspace:*
         version: link:../src/react
+      '@boredgame/registry':
+        specifier: workspace:*
+        version: link:../src/registry
+      '@boredgame/tic-tac-toe':
+        specifier: workspace:*
+        version: link:../src/tic-tac-toe
       '@boredgame/transport':
         specifier: workspace:*
         version: link:../src/transport
@@ -184,6 +190,9 @@ importers:
       '@boredgame/engine':
         specifier: workspace:*
         version: link:../engine
+      '@boredgame/registry':
+        specifier: workspace:*
+        version: link:../registry
       '@boredgame/transport':
         specifier: workspace:*
         version: link:../transport
@@ -198,6 +207,16 @@ importers:
         specifier: ^5.7.3
         version: 5.9.3
 
+  src/registry:
+    dependencies:
+      '@boredgame/core':
+        specifier: workspace:*
+        version: link:../core
+    devDependencies:
+      typescript:
+        specifier: ^5.7.3
+        version: 5.9.3
+
   src/server:
     dependencies:
       '@boredgame/core':
@@ -206,6 +225,12 @@ importers:
       '@boredgame/demo-game':
         specifier: workspace:*
         version: link:../demo-game
+      '@boredgame/registry':
+        specifier: workspace:*
+        version: link:../registry
+      '@boredgame/tic-tac-toe':
+        specifier: workspace:*
+        version: link:../tic-tac-toe
       '@boredgame/transport':
         specifier: workspace:*
         version: link:../transport
@@ -219,6 +244,25 @@ importers:
       tsx:
         specifier: ^4.19.4
         version: 4.22.4
+      typescript:
+        specifier: ^5.7.3
+        version: 5.9.3
+
+  src/tic-tac-toe:
+    dependencies:
+      '@boredgame/core':
+        specifier: workspace:*
+        version: link:../core
+      react:
+        specifier: ^18
+        version: 18.3.1
+      zod:
+        specifier: ^3.25.76
+        version: 3.25.76
+    devDependencies:
+      '@types/react':
+        specifier: ^18.3.18
+        version: 18.3.31
       typescript:
         specifier: ^5.7.3
         version: 5.9.3

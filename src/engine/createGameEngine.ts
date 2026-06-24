@@ -6,6 +6,8 @@ import type {
 } from "@boredgame/core";
 import type { GameTransport } from "@boredgame/transport";
 
+export const ENGINE_PROTOCOL_VERSION = "0.1.0";
+
 export type GameEngineOptions<TState, TAction> = {
   transport: GameTransport;
   definition: GameDefinition<TState, TAction>;
