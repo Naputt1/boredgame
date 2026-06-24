@@ -9,7 +9,10 @@
     "preview": "vite preview --host 127.0.0.1"
   },
   "dependencies": {
-    "boredgame": "workspace:*",
+    "@boredgame/core": "workspace:*",
+    "@boredgame/engine": "workspace:*",
+    "@boredgame/schemas": "workspace:*",
+    "@boredgame/transport": "workspace:*",
     "@pixi/react": "^7.1.2",
     "pixi.js": "^7.4.2",
     "react": "^18.3.1",

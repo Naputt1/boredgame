@@ -12,13 +12,7 @@
     "moduleResolution": "Bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "noEmit": true,
-    "paths": {
-      "@boredgame/core": ["../src/core/index.ts"],
-      "@boredgame/engine": ["../src/engine/index.ts"],
-      "@boredgame/schemas": ["../src/schemas/index.ts"],
-      "@boredgame/transport": ["../src/transport/index.ts"]
-    }
+    "noEmit": true
   },
-  "include": ["src"]
+  "include": ["."]
 }

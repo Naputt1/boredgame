@@ -1,0 +1,21 @@
+{
+  "name": "@boredgame/server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch index.ts",
+    "start": "tsx index.ts"
+  },
+  "dependencies": {
+    "@boredgame/core": "workspace:*",
+    "@boredgame/schemas": "workspace:*",
+    "@boredgame/transport": "workspace:*",
+    "ws": "^8.18.1"
+  },
+  "devDependencies": {
+    "@types/ws": "^8.18.1",
+    "tsx": "^4.19.4",
+    "typescript": "^5.7.3"
+  }
+}
