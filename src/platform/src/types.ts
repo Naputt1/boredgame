@@ -1,4 +1,4 @@
-import type { GameDefinition } from "@boredgame/core";
+import type { GameDefinition, GameEngineMiddleware } from "@boredgame/core";
 
 export type DiscordParticipant = {
   id: string;
@@ -18,6 +18,7 @@ export type PlatformContext = {
 export type PlatformProviderProps = {
   children: React.ReactNode;
   gameDefinition: GameDefinition<any, any>;
+  middleware?: GameEngineMiddleware[];
 };
 
 export type { GameDefinition };

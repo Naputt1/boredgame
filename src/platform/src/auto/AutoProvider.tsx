@@ -24,7 +24,7 @@ const localId = (prefix: string): string => {
   return gen;
 };
 
-export const PlatformProvider = ({ children, gameDefinition }: PlatformProviderProps) => {
+export const PlatformProvider = ({ children, gameDefinition, middleware }: PlatformProviderProps) => {
   const [ctx, setCtx] = useState<PlatformContext | null>(null);
 
   useEffect(() => {
@@ -105,6 +105,7 @@ export const PlatformProvider = ({ children, gameDefinition }: PlatformProviderP
         roomId={ctx.instanceId}
         transport={transport}
         participants={ctx.participants}
+        middleware={middleware}
       >
         {children}
       </GameProvider>

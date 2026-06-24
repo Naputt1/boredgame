@@ -27,6 +27,7 @@ type GameProviderProps<TState, TAction> = {
   syncMode?: SyncMode;
   initialState?: TState;
   participants?: GameParticipant[];
+  middleware?: GameEngineMiddleware[];
 };
 
 type GameContextValue = {
@@ -38,7 +39,12 @@ type GameContextValue = {
   participants: GameParticipant[];
 };
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type GameEngineContextValue = GameEngine<any, any> | null;
+
 const GameContext = createContext<GameContextValue | null>(null);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const GameEngineContext = createContext<GameEngine<any, any> | null>(null);
 
 const createLoggingMiddleware = (): GameEngineMiddleware => ({
   onError: (error) => {
@@ -54,22 +60,22 @@ export const GameProvider = <TState, TAction>({
   transport,
   syncMode = "action",
   initialState,
-  participants = []
+  participants = [],
+  middleware = []
 }: GameProviderProps<TState, TAction>) => {
   const initialStateRef = useRef(initialState ?? definition.createInitialState());
   const [state, setState] = useState(initialStateRef.current);
   const [connected, setConnected] = useState(false);
 
   const engine = useMemo<GameEngine<TState, TAction>>(
-    () =>
-      createGameEngine({
-        transport,
-        definition,
-        syncMode,
-        initialState: initialStateRef.current,
-        middleware: [createLoggingMiddleware()]
-      }),
-    [syncMode, transport, definition]
+    () => createGameEngine({
+      transport,
+      definition,
+      syncMode,
+      initialState: initialStateRef.current,
+      middleware: [...middleware, createLoggingMiddleware()]
+    }),
+    [syncMode, transport, definition, middleware]
   );
 
   useEffect(() => {
@@ -107,7 +113,16 @@ export const GameProvider = <TState, TAction>({
     [connected, engine.sendAction, playerId, roomId, state, participants]
   );
 
-  return <GameContext.Provider value={value}>{children}</GameContext.Provider>;
+  return (
+    <GameEngineContext.Provider value={engine}>
+      <GameContext.Provider value={value}>{children}</GameContext.Provider>
+    </GameEngineContext.Provider>
+  );
+};
+
+export const useGameEngine = <TState = unknown, TAction = unknown>(): GameEngine<TState, TAction> | null => {
+  const ctx = useContext(GameEngineContext);
+  return ctx as GameEngine<TState, TAction> | null;
 };
 
 export const useGame = <TState = unknown, TAction = unknown>(): {

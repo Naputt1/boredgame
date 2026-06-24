@@ -29,6 +29,9 @@ importers:
       '@boredgame/demo-game':
         specifier: workspace:*
         version: link:../src/demo-game
+      '@boredgame/devtools':
+        specifier: workspace:*
+        version: link:../src/devtools
       '@boredgame/engine':
         specifier: workspace:*
         version: link:../src/engine
@@ -105,6 +108,28 @@ importers:
       zod:
         specifier: ^3.25.76
         version: 3.25.76
+    devDependencies:
+      '@types/react':
+        specifier: ^18.3.18
+        version: 18.3.31
+      typescript:
+        specifier: ^5.7.3
+        version: 5.9.3
+
+  src/devtools:
+    dependencies:
+      '@boredgame/core':
+        specifier: workspace:*
+        version: link:../core
+      '@boredgame/engine':
+        specifier: workspace:*
+        version: link:../engine
+      '@boredgame/react':
+        specifier: workspace:*
+        version: link:../react
+      react:
+        specifier: ^18
+        version: 18.3.1
     devDependencies:
       '@types/react':
         specifier: ^18.3.18

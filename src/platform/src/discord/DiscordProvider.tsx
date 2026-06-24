@@ -14,7 +14,7 @@ export const usePlatform = (): PlatformContext => {
   return value;
 };
 
-export const PlatformProvider = ({ children, gameDefinition }: PlatformProviderProps) => {
+export const PlatformProvider = ({ children, gameDefinition, middleware }: PlatformProviderProps) => {
   const ctx = useDiscordContext();
 
   const transport = useMemo(
@@ -35,6 +35,7 @@ export const PlatformProvider = ({ children, gameDefinition }: PlatformProviderP
         roomId={ctx.instanceId}
         transport={transport}
         participants={ctx.participants}
+        middleware={middleware}
       >
         {children}
       </GameProvider>

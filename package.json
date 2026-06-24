@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev:sample": "pnpm --filter sample-project dev",
+    "build": "turbo run build",
     "test": "vitest run",
     "test:watch": "vitest"
   },

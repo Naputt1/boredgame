@@ -1,0 +1,22 @@
+{
+  "name": "@boredgame/devtools",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./index.ts",
+    "./*": "./*"
+  },
+  "dependencies": {
+    "@boredgame/core": "workspace:*",
+    "@boredgame/engine": "workspace:*",
+    "@boredgame/react": "workspace:*"
+  },
+  "peerDependencies": {
+    "react": "^18"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.18",
+    "typescript": "^5.7.3"
+  }
+}
