@@ -22,7 +22,7 @@ export type Token = {
   position: BoardPosition;
 };
 
-export type GameState = {
+export type DemoGameState = {
   version: number;
   board: BoardSize;
   players: Record<PlayerId, Player>;
@@ -32,7 +32,7 @@ export type GameState = {
 
 export const GAME_STATE_VERSION = 1;
 
-export const createInitialState = (): GameState => ({
+export const createInitialState = (): DemoGameState => ({
   version: GAME_STATE_VERSION,
   board: {
     width: 8,

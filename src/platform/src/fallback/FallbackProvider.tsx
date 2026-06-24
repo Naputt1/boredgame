@@ -1,7 +1,7 @@
 import { createContext, ReactNode, useContext, useMemo } from "react";
 import { GameProvider } from "@boredgame/react";
 import { createTransport } from "boredgame:transport";
-import type { PlatformContext } from "../types";
+import type { PlatformContext, PlatformProviderProps } from "../types";
 import { useFallbackContext } from "./useFallbackContext";
 
 const PlatformCtx = createContext<PlatformContext | null>(null);
@@ -14,7 +14,7 @@ export const usePlatform = (): PlatformContext => {
   return value;
 };
 
-export const PlatformProvider = ({ children }: { children: ReactNode }) => {
+export const PlatformProvider = ({ children, gameDefinition }: PlatformProviderProps) => {
   const ctx = useFallbackContext();
 
   const transport = useMemo(
@@ -25,6 +25,7 @@ export const PlatformProvider = ({ children }: { children: ReactNode }) => {
   return (
     <PlatformCtx.Provider value={ctx}>
       <GameProvider
+        definition={gameDefinition}
         playerId={ctx.userId}
         roomId={ctx.instanceId}
         transport={transport}

@@ -3,13 +3,13 @@ import type {
   PlayerJoinedAction,
   TokenMovedAction,
   GameResetAction,
-  GameAction
+  DemoGameAction
 } from "./actions";
 
 const makeActionId = (playerId: string): string =>
   globalThis.crypto?.randomUUID?.() ?? `${playerId}-${Date.now()}-${Math.random()}`;
 
-export const createActionMeta = (playerId: string): GameAction["meta"] => ({
+export const createActionMeta = (playerId: string): DemoGameAction["meta"] => ({
   playerId,
   timestamp: Date.now(),
   actionId: makeActionId(playerId)

@@ -1,5 +1,3 @@
-import { GameState } from "@boredgame/core";
-import { GameAction } from "@boredgame/schemas";
 import { GameTransport, Unsubscribe } from "./GameTransport";
 
 export type P2PTransportOptions = {
@@ -7,8 +5,8 @@ export type P2PTransportOptions = {
 };
 
 export class P2PTransport implements GameTransport {
-  private actionListeners = new Set<(action: GameAction) => void>();
-  private stateListeners = new Set<(state: GameState) => void>();
+  private actionListeners = new Set<(action: unknown) => void>();
+  private stateListeners = new Set<(state: unknown) => void>();
   private roomId: string | null = null;
 
   constructor(private readonly options: P2PTransportOptions) {}
@@ -18,7 +16,7 @@ export class P2PTransport implements GameTransport {
     // Template boundary: wire Discord instance-scoped WebRTC signaling here.
   }
 
-  sendAction(action: GameAction): void {
+  sendAction(action: unknown): void {
     if (!this.roomId) {
       throw new Error("P2PTransport must connect before sending actions.");
     }
@@ -27,7 +25,7 @@ export class P2PTransport implements GameTransport {
     this.actionListeners.forEach((listener) => listener(action));
   }
 
-  sendState(state: GameState): void {
+  sendState(state: unknown): void {
     if (!this.roomId) {
       throw new Error("P2PTransport must connect before sending state.");
     }
@@ -36,12 +34,12 @@ export class P2PTransport implements GameTransport {
     this.stateListeners.forEach((listener) => listener(state));
   }
 
-  onAction(callback: (action: GameAction) => void): Unsubscribe {
+  onAction(callback: (action: unknown) => void): Unsubscribe {
     this.actionListeners.add(callback);
     return () => this.actionListeners.delete(callback);
   }
 
-  onStateUpdate(callback: (state: GameState) => void): Unsubscribe {
+  onStateUpdate(callback: (state: unknown) => void): Unsubscribe {
     this.stateListeners.add(callback);
     return () => this.stateListeners.delete(callback);
   }

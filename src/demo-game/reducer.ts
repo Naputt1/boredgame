@@ -1,15 +1,16 @@
-import { GameAction } from "@boredgame/schemas";
-import { createInitialState, GameState, isInsideBoard } from "./state";
+import type { DemoGameAction } from "./actions";
+import { createInitialState, isInsideBoard } from "./state";
+import type { DemoGameState } from "./state";
 
 const appendAppliedActionId = (
-  state: GameState,
+  state: DemoGameState,
   actionId: string
 ): string[] => [...state.appliedActionIds, actionId];
 
-export const gameReducer = (
-  state: GameState,
-  action: GameAction
-): GameState => {
+export const demoGameReducer = (
+  state: DemoGameState,
+  action: DemoGameAction
+): DemoGameState => {
   if (state.appliedActionIds.includes(action.meta.actionId)) {
     return state;
   }
@@ -82,10 +83,10 @@ export const gameReducer = (
 };
 
 export const replayActions = (
-  initialState: GameState,
-  actions: readonly GameAction[]
-): GameState =>
-  actions.reduce<GameState>(
-    (state, action) => gameReducer(state, action),
+  initialState: DemoGameState,
+  actions: readonly DemoGameAction[]
+): DemoGameState =>
+  actions.reduce<DemoGameState>(
+    (state, action) => demoGameReducer(state, action),
     initialState
   );

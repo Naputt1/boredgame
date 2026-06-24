@@ -2,7 +2,7 @@ import { createContext, ReactNode, useContext, useEffect, useMemo, useState } fr
 import { DiscordSDK } from "@discord/embedded-app-sdk";
 import { GameProvider } from "@boredgame/react";
 import { createTransport } from "boredgame:transport";
-import type { DiscordParticipant, PlatformContext } from "../types";
+import type { DiscordParticipant, PlatformContext, PlatformProviderProps } from "../types";
 
 const PlatformCtx = createContext<PlatformContext | null>(null);
 
@@ -24,7 +24,7 @@ const localId = (prefix: string): string => {
   return gen;
 };
 
-export const PlatformProvider = ({ children }: { children: ReactNode }) => {
+export const PlatformProvider = ({ children, gameDefinition }: PlatformProviderProps) => {
   const [ctx, setCtx] = useState<PlatformContext | null>(null);
 
   useEffect(() => {
@@ -100,6 +100,7 @@ export const PlatformProvider = ({ children }: { children: ReactNode }) => {
   return (
     <PlatformCtx.Provider value={ctx}>
       <GameProvider
+        definition={gameDefinition}
         playerId={ctx.userId}
         roomId={ctx.instanceId}
         transport={transport}

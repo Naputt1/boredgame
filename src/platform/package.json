@@ -11,6 +11,7 @@
     "./fallback": "./src/fallback/index.ts"
   },
   "dependencies": {
+    "@boredgame/core": "workspace:*",
     "@boredgame/react": "workspace:*",
     "@boredgame/transport": "workspace:*",
     "@discord/embedded-app-sdk": "^2.5.0"

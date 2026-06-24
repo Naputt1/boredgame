@@ -9,7 +9,7 @@
   },
   "dependencies": {
     "@boredgame/core": "workspace:*",
-    "@boredgame/schemas": "workspace:*",
+    "@boredgame/demo-game": "workspace:*",
     "@boredgame/transport": "workspace:*",
     "ws": "^8.18.1"
   },

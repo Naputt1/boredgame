@@ -43,7 +43,7 @@ export const gameResetActionSchema = z.object({
   meta: actionMetaSchema
 });
 
-export const gameActionSchema = z.discriminatedUnion("type", [
+export const demoGameActionSchema = z.discriminatedUnion("type", [
   playerJoinedActionSchema,
   tokenMovedActionSchema,
   gameResetActionSchema
@@ -52,10 +52,4 @@ export const gameActionSchema = z.discriminatedUnion("type", [
 export type PlayerJoinedAction = z.infer<typeof playerJoinedActionSchema>;
 export type TokenMovedAction = z.infer<typeof tokenMovedActionSchema>;
 export type GameResetAction = z.infer<typeof gameResetActionSchema>;
-export type GameAction = z.infer<typeof gameActionSchema>;
-
-export const parseGameAction = (action: unknown): GameAction =>
-  gameActionSchema.parse(action);
-
-export const isGameAction = (action: unknown): action is GameAction =>
-  gameActionSchema.safeParse(action).success;
+export type DemoGameAction = z.infer<typeof demoGameActionSchema>;

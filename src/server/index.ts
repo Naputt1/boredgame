@@ -1,10 +1,10 @@
 import { WebSocketServer, WebSocket } from "ws";
-import { parseGameAction } from "@boredgame/schemas";
 import {
   ClientMessage,
   Envelope,
   WSPROTO_VERSION
 } from "@boredgame/transport";
+import { demoGameDefinition } from "@boredgame/demo-game";
 import { Room } from "./Room";
 
 const PORT = Number(process.env.PORT ?? 3001);
@@ -52,12 +52,6 @@ wss.on("connection", (socket: WebSocket, req) => {
 
       case "action": {
         const room = getOrCreateRoom(roomId);
-        try {
-          parseGameAction(msg.payload.action);
-        } catch {
-          sendError(socket, "BAD_ACTION", "Action failed schema validation");
-          return;
-        }
         room.handleAction(msg.payload.action, playerId);
         break;
       }
@@ -87,7 +81,7 @@ function getOrCreateRoom(roomId: string): Room {
   let room = rooms.get(roomId);
 
   if (!room) {
-    room = new Room(roomId);
+    room = new Room(roomId, demoGameDefinition);
     rooms.set(roomId, room);
   }
 

@@ -26,6 +26,9 @@ importers:
       '@boredgame/core':
         specifier: workspace:*
         version: link:../src/core
+      '@boredgame/demo-game':
+        specifier: workspace:*
+        version: link:../src/demo-game
       '@boredgame/engine':
         specifier: workspace:*
         version: link:../src/engine
@@ -35,9 +38,6 @@ importers:
       '@boredgame/react':
         specifier: workspace:*
         version: link:../src/react
-      '@boredgame/schemas':
-        specifier: workspace:*
-        version: link:../src/schemas
       '@boredgame/transport':
         specifier: workspace:*
         version: link:../src/transport
@@ -81,24 +81,56 @@ importers:
 
   src/core:
     dependencies:
-      '@boredgame/schemas':
+      zod:
+        specifier: ^3.25.76
+        version: 3.25.76
+
+  src/demo-game:
+    dependencies:
+      '@boredgame/core':
         specifier: workspace:*
-        version: link:../schemas
+        version: link:../core
+      '@boredgame/utils':
+        specifier: workspace:*
+        version: link:../utils
+      '@pixi/react':
+        specifier: ^7.1.2
+        version: 7.1.2(77d3f2588946408ada55fa4835ae6c02)
+      pixi.js:
+        specifier: ^7.4.2
+        version: 7.4.3
+      react:
+        specifier: ^18
+        version: 18.3.1
+      zod:
+        specifier: ^3.25.76
+        version: 3.25.76
+    devDependencies:
+      '@types/react':
+        specifier: ^18.3.18
+        version: 18.3.31
+      typescript:
+        specifier: ^5.7.3
+        version: 5.9.3
 
   src/engine:
     dependencies:
       '@boredgame/core':
         specifier: workspace:*
         version: link:../core
-      '@boredgame/schemas':
-        specifier: workspace:*
-        version: link:../schemas
       '@boredgame/transport':
         specifier: workspace:*
         version: link:../transport
+    devDependencies:
+      zod:
+        specifier: ^3.25.76
+        version: 3.25.76
 
   src/platform:
     dependencies:
+      '@boredgame/core':
+        specifier: workspace:*
+        version: link:../core
       '@boredgame/react':
         specifier: workspace:*
         version: link:../react
@@ -127,9 +159,6 @@ importers:
       '@boredgame/engine':
         specifier: workspace:*
         version: link:../engine
-      '@boredgame/schemas':
-        specifier: workspace:*
-        version: link:../schemas
       '@boredgame/transport':
         specifier: workspace:*
         version: link:../transport
@@ -144,20 +173,14 @@ importers:
         specifier: ^5.7.3
         version: 5.9.3
 
-  src/schemas:
-    dependencies:
-      zod:
-        specifier: ^3.25.76
-        version: 3.25.76
-
   src/server:
     dependencies:
       '@boredgame/core':
         specifier: workspace:*
         version: link:../core
-      '@boredgame/schemas':
+      '@boredgame/demo-game':
         specifier: workspace:*
-        version: link:../schemas
+        version: link:../demo-game
       '@boredgame/transport':
         specifier: workspace:*
         version: link:../transport
@@ -175,14 +198,9 @@ importers:
         specifier: ^5.7.3
         version: 5.9.3
 
-  src/transport:
-    dependencies:
-      '@boredgame/core':
-        specifier: workspace:*
-        version: link:../core
-      '@boredgame/schemas':
-        specifier: workspace:*
-        version: link:../schemas
+  src/transport: {}
+
+  src/utils: {}
 
   src/vite-plugin:
     dependencies:

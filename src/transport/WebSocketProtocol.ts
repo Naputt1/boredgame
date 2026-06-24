@@ -1,6 +1,3 @@
-import { GameAction } from "@boredgame/schemas";
-import { GameState } from "@boredgame/core";
-
 export type SyncMode = "action" | "state";
 
 export const WSPROTO_VERSION = 1;
@@ -12,7 +9,7 @@ export type JoinRoomPayload = {
 };
 
 export type ActionPayload = {
-  action: GameAction;
+  action: unknown;
 };
 
 export type RequestSyncPayload = {
@@ -20,15 +17,15 @@ export type RequestSyncPayload = {
 };
 
 export type StateSnapshotPayload = {
-  state: GameState;
+  state: unknown;
 };
 
 export type ActionRelayPayload = {
-  action: GameAction;
+  action: unknown;
 };
 
 export type ActionReplayPayload = {
-  actions: GameAction[];
+  actions: unknown[];
 };
 
 export type PeerLeftPayload = {

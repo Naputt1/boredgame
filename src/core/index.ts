@@ -1,2 +1,7 @@
-export * from "./reducer";
-export * from "./state";
+export type {
+  SyncMode,
+  GameEngineMiddleware,
+  Unsubscribe,
+  GameRendererProps,
+  GameDefinition
+} from "./gameDefinition";

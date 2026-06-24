@@ -7,10 +7,10 @@ import {
   useRef,
   useState
 } from "react";
-import { GameEngine, SyncMode, createGameEngine } from "@boredgame/engine";
-import { createInitialState, GameState } from "@boredgame/core";
-import { GameAction } from "@boredgame/schemas";
-import { GameTransport } from "@boredgame/transport";
+import type { GameDefinition, GameEngineMiddleware, SyncMode } from "@boredgame/core";
+import { createGameEngine } from "@boredgame/engine";
+import type { GameEngine } from "@boredgame/engine";
+import type { GameTransport } from "@boredgame/transport";
 
 export type GameParticipant = {
   id: string;
@@ -18,19 +18,20 @@ export type GameParticipant = {
   globalName?: string;
 };
 
-type GameProviderProps = {
+type GameProviderProps<TState, TAction> = {
   children: ReactNode;
+  definition: GameDefinition<TState, TAction>;
   playerId: string;
   roomId: string;
   transport: GameTransport;
   syncMode?: SyncMode;
-  initialState?: GameState;
+  initialState?: TState;
   participants?: GameParticipant[];
 };
 
 type GameContextValue = {
-  state: GameState;
-  sendAction: (action: GameAction) => void;
+  state: unknown;
+  sendAction: (action: unknown) => void;
   connected: boolean;
   playerId: string;
   roomId: string;
@@ -39,34 +40,36 @@ type GameContextValue = {
 
 const GameContext = createContext<GameContextValue | null>(null);
 
-export const GameProvider = ({
+const createLoggingMiddleware = (): GameEngineMiddleware => ({
+  onError: (error) => {
+    console.error("Game engine error", error);
+  }
+});
+
+export const GameProvider = <TState, TAction>({
   children,
+  definition,
   playerId,
   roomId,
   transport,
   syncMode = "action",
   initialState,
   participants = []
-}: GameProviderProps) => {
-  const initialStateRef = useRef(initialState ?? createInitialState());
+}: GameProviderProps<TState, TAction>) => {
+  const initialStateRef = useRef(initialState ?? definition.createInitialState());
   const [state, setState] = useState(initialStateRef.current);
   const [connected, setConnected] = useState(false);
 
-  const engine = useMemo<GameEngine>(
+  const engine = useMemo<GameEngine<TState, TAction>>(
     () =>
       createGameEngine({
         transport,
+        definition,
         syncMode,
         initialState: initialStateRef.current,
-        middleware: [
-          {
-            onError: (error) => {
-              console.error("Game engine error", error);
-            }
-          }
-        ]
+        middleware: [createLoggingMiddleware()]
       }),
-    [syncMode, transport]
+    [syncMode, transport, definition]
   );
 
   useEffect(() => {
@@ -95,7 +98,7 @@ export const GameProvider = ({
   const value = useMemo<GameContextValue>(
     () => ({
       state,
-      sendAction: engine.sendAction,
+      sendAction: engine.sendAction as (action: unknown) => void,
       connected,
       playerId,
       roomId,
@@ -107,12 +110,26 @@ export const GameProvider = ({
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;
 };
 
-export const useGame = (): GameContextValue => {
+export const useGame = <TState = unknown, TAction = unknown>(): {
+  state: TState;
+  sendAction: (action: TAction) => void;
+  connected: boolean;
+  playerId: string;
+  roomId: string;
+  participants: GameParticipant[];
+} => {
   const value = useContext(GameContext);
 
   if (!value) {
     throw new Error("useGame must be used inside GameProvider.");
   }
 
-  return value;
+  return value as {
+    state: TState;
+    sendAction: (action: TAction) => void;
+    connected: boolean;
+    playerId: string;
+    roomId: string;
+    participants: GameParticipant[];
+  };
 };

@@ -9,7 +9,9 @@
   },
   "dependencies": {
     "@boredgame/core": "workspace:*",
-    "@boredgame/schemas": "workspace:*",
     "@boredgame/transport": "workspace:*"
+  },
+  "devDependencies": {
+    "zod": "^3.25.76"
   }
 }

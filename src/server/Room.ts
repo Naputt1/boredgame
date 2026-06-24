@@ -1,10 +1,8 @@
 import { WebSocket } from "ws";
-import { createInitialState, GameState, gameReducer } from "@boredgame/core";
-import { GameAction, parseGameAction } from "@boredgame/schemas";
+import type { GameDefinition, SyncMode } from "@boredgame/core";
 import {
   Envelope,
   ServerMessage,
-  SyncMode,
   WSPROTO_VERSION
 } from "@boredgame/transport";
 
@@ -18,14 +16,16 @@ const FULL_SNAPSHOT_THRESHOLD = 50;
 
 export class Room {
   readonly roomId: string;
+  private definition: GameDefinition<unknown, unknown>;
   private players = new Map<string, ConnectedPlayer>();
-  private state: GameState;
-  private actionLog: GameAction[] = [];
+  private state: unknown;
+  private actionLog: unknown[] = [];
   private nextSeq = 0;
 
-  constructor(roomId: string) {
+  constructor(roomId: string, definition: GameDefinition<unknown, unknown>) {
     this.roomId = roomId;
-    this.state = createInitialState();
+    this.definition = definition;
+    this.state = definition.createInitialState();
   }
 
   get isEmpty(): boolean {
@@ -77,7 +77,14 @@ export class Room {
   }
 
   handleAction(rawAction: unknown, _senderPlayerId: string): void {
-    const action = parseGameAction(rawAction);
+    let action: unknown;
+
+    try {
+      action = this.definition.actionSchema.parse(rawAction);
+    } catch {
+      return;
+    }
+
     this.actionLog.push(action);
 
     if (this.syncModeForPlayer(_senderPlayerId) === "action") {
@@ -85,7 +92,7 @@ export class Room {
       return;
     }
 
-    this.state = gameReducer(this.state, action);
+    this.state = this.definition.reducer(this.state, action);
     this.broadcast({ type: "state-snapshot", payload: { state: this.state } });
   }
 

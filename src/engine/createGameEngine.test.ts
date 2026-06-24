@@ -1,60 +1,92 @@
 import { describe, expect, it, vi } from "vitest";
+import { z } from "zod";
 import { createGameEngine } from ".";
-import { createInitialState, GameState } from "@boredgame/core";
-import { GAME_ACTION_VERSION, GameAction } from "@boredgame/schemas";
 import { LocalTransport } from "@boredgame/transport";
 
-const joinAction: GameAction = {
-  type: "player.joined",
-  version: GAME_ACTION_VERSION,
-  payload: {
-    playerId: "player-1",
-    name: "Player 1",
-    color: "#2563eb",
-    tokenId: "token-1",
-    startPosition: { x: 0, y: 0 }
-  },
-  meta: {
-    playerId: "player-1",
-    timestamp: 1,
-    actionId: "join-1"
-  }
+type TestState = {
+  count: number;
+  appliedActionIds: string[];
 };
+
+type TestAction = {
+  type: "increment";
+  version: number;
+  payload: { by: number };
+  meta: { actionId: string; playerId: string; timestamp: number };
+};
+
+const testDefinition = {
+  id: "test",
+  name: "Test Game",
+  createInitialState: (): TestState => ({
+    count: 0,
+    appliedActionIds: []
+  }),
+  reducer: (state: TestState, action: TestAction): TestState => {
+    if (state.appliedActionIds.includes(action.meta.actionId)) {
+      return state;
+    }
+    return {
+      ...state,
+      count: state.count + action.payload.by,
+      appliedActionIds: [...state.appliedActionIds, action.meta.actionId]
+    };
+  },
+  actionSchema: z.object({
+    type: z.literal("increment"),
+    version: z.literal(1),
+    payload: z.object({
+      by: z.number().int().positive()
+    }),
+    meta: z.object({
+      actionId: z.string().min(1),
+      playerId: z.string().min(1),
+      timestamp: z.number().int().nonnegative()
+    })
+  }),
+  renderer: () => null
+};
+
+const incrementAction = (actionId = "inc-1", by = 1): TestAction => ({
+  type: "increment",
+  version: 1,
+  payload: { by },
+  meta: { actionId, playerId: "player-1", timestamp: 1 }
+});
 
 describe("createGameEngine", () => {
   it("applies looped-back actions once in action mode", async () => {
     const transport = new LocalTransport();
-    const engine = createGameEngine({ transport, syncMode: "action" });
+    const engine = createGameEngine({
+      transport,
+      definition: testDefinition,
+      syncMode: "action"
+    });
     const listener = vi.fn();
 
     engine.subscribe(listener);
     await engine.connect("room-1");
-    engine.sendAction(joinAction);
+    engine.sendAction(incrementAction());
 
-    expect(engine.getState().players["player-1"]?.name).toBe("Player 1");
+    expect(engine.getState().count).toBe(1);
     expect(listener).toHaveBeenCalledTimes(2);
   });
 
   it("replaces local state from transport snapshots in state mode", async () => {
     const transport = new LocalTransport();
-    const engine = createGameEngine({ transport, syncMode: "state" });
+    const engine = createGameEngine({
+      transport,
+      definition: testDefinition,
+      syncMode: "state"
+    });
     const listener = vi.fn();
-    const snapshot: GameState = {
-      ...createInitialState(),
-      players: {
-        "server-player": {
-          id: "server-player",
-          name: "Server Player",
-          color: "#059669"
-        }
-      }
-    };
+    const snapshot: TestState = { count: 42, appliedActionIds: ["snap-1"] };
 
     engine.subscribe(listener);
     await engine.connect("room-1");
     transport.sendState(snapshot);
 
-    expect(engine.getState().players["server-player"]?.name).toBe("Server Player");
+    expect(engine.getState().count).toBe(42);
     expect(listener).toHaveBeenCalledTimes(2);
   });
 
@@ -63,15 +95,16 @@ describe("createGameEngine", () => {
     const onError = vi.fn();
     const engine = createGameEngine({
       transport,
+      definition: testDefinition,
       syncMode: "action",
       middleware: [{ onError }]
     });
 
     await engine.connect("room-1");
-    engine.sendAction({ ...joinAction, version: 999 } as unknown as GameAction);
+    engine.sendAction({ ...incrementAction(), version: 999 } as unknown as TestAction);
 
     expect(onError).toHaveBeenCalledTimes(1);
-    expect(engine.getState()).toEqual(createInitialState());
+    expect(engine.getState()).toEqual(testDefinition.createInitialState());
   });
 
   it("disconnect cleans up transport", async () => {
@@ -79,41 +112,50 @@ describe("createGameEngine", () => {
     const onError = vi.fn();
     const engine = createGameEngine({
       transport,
+      definition: testDefinition,
       syncMode: "action",
       middleware: [{ onError }]
     });
 
     await engine.connect("room-1");
     engine.disconnect();
-    engine.sendAction(joinAction);
+    engine.sendAction(incrementAction());
 
     expect(onError).toHaveBeenCalledTimes(1);
   });
 
   it("reconnect restores action flow", async () => {
     const transport = new LocalTransport();
-    const engine = createGameEngine({ transport, syncMode: "action" });
+    const engine = createGameEngine({
+      transport,
+      definition: testDefinition,
+      syncMode: "action"
+    });
 
     await engine.connect("room-1");
     engine.disconnect();
     await engine.connect("room-1");
-    engine.sendAction(joinAction);
+    engine.sendAction(incrementAction());
 
-    expect(engine.getState().players["player-1"]?.name).toBe("Player 1");
+    expect(engine.getState().count).toBe(1);
   });
 
   it("duplicate remote actions are applied once", async () => {
     const transport = new LocalTransport();
-    const engine = createGameEngine({ transport, syncMode: "action" });
+    const engine = createGameEngine({
+      transport,
+      definition: testDefinition,
+      syncMode: "action"
+    });
     const listener = vi.fn();
 
     engine.subscribe(listener);
     await engine.connect("room-1");
-    transport.sendAction(joinAction);
-    transport.sendAction(joinAction);
+    transport.sendAction(incrementAction());
+    transport.sendAction(incrementAction());
 
     expect(listener).toHaveBeenCalledTimes(2);
-    expect(engine.getState().players["player-1"]?.name).toBe("Player 1");
+    expect(engine.getState().count).toBe(1);
   });
 
   it("beforeSend middleware fires on outbound actions", async () => {
@@ -121,15 +163,16 @@ describe("createGameEngine", () => {
     const beforeSend = vi.fn();
     const engine = createGameEngine({
       transport,
+      definition: testDefinition,
       syncMode: "action",
       middleware: [{ beforeSend }]
     });
 
     await engine.connect("room-1");
-    engine.sendAction(joinAction);
+    engine.sendAction(incrementAction());
 
     expect(beforeSend).toHaveBeenCalledTimes(1);
-    expect(beforeSend).toHaveBeenCalledWith(joinAction, expect.any(Object));
+    expect(beforeSend).toHaveBeenCalledWith(incrementAction(), expect.any(Object));
   });
 
   it("beforeApply fires before afterApply around reducer", async () => {
@@ -137,6 +180,7 @@ describe("createGameEngine", () => {
     const order: string[] = [];
     const engine = createGameEngine({
       transport,
+      definition: testDefinition,
       syncMode: "action",
       middleware: [
         {
@@ -147,7 +191,7 @@ describe("createGameEngine", () => {
     });
 
     await engine.connect("room-1");
-    transport.sendAction(joinAction);
+    transport.sendAction(incrementAction());
 
     expect(order).toEqual(["before", "after"]);
   });
@@ -157,6 +201,7 @@ describe("createGameEngine", () => {
     const order: number[] = [];
     const engine = createGameEngine({
       transport,
+      definition: testDefinition,
       syncMode: "action",
       middleware: [
         { beforeSend: () => order.push(1) },
@@ -165,7 +210,7 @@ describe("createGameEngine", () => {
     });
 
     await engine.connect("room-1");
-    engine.sendAction(joinAction);
+    engine.sendAction(incrementAction());
 
     expect(order).toEqual([1, 2]);
   });

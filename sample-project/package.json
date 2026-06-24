@@ -10,10 +10,10 @@
   },
   "dependencies": {
     "@boredgame/core": "workspace:*",
+    "@boredgame/demo-game": "workspace:*",
     "@boredgame/engine": "workspace:*",
     "@boredgame/platform": "workspace:*",
     "@boredgame/react": "workspace:*",
-    "@boredgame/schemas": "workspace:*",
     "@boredgame/transport": "workspace:*",
     "@boredgame/vite-plugin": "workspace:*",
     "@discord/embedded-app-sdk": "^2.5.0",

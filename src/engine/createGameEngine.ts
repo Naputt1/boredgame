@@ -1,41 +1,37 @@
-import { gameReducer, createInitialState, GameState } from "@boredgame/core";
-import { GameAction, parseGameAction, parseGameState } from "@boredgame/schemas";
-import { GameTransport, Unsubscribe } from "@boredgame/transport";
+import type {
+  GameDefinition,
+  GameEngineMiddleware,
+  SyncMode,
+  Unsubscribe
+} from "@boredgame/core";
+import type { GameTransport } from "@boredgame/transport";
 
-export type SyncMode = "action" | "state";
-
-export type GameEngineMiddleware = {
-  beforeSend?(action: GameAction, state: GameState): void;
-  beforeApply?(action: GameAction, state: GameState): void;
-  afterApply?(action: GameAction, state: GameState): void;
-  onStateReplace?(state: GameState): void;
-  onError?(error: unknown): void;
-};
-
-export type GameEngineOptions = {
+export type GameEngineOptions<TState, TAction> = {
   transport: GameTransport;
-  syncMode: SyncMode;
-  initialState?: GameState;
+  definition: GameDefinition<TState, TAction>;
+  syncMode?: SyncMode;
+  initialState?: TState;
   middleware?: GameEngineMiddleware[];
 };
 
-export type GameEngine = {
+export type GameEngine<TState, TAction> = {
   connect(roomId: string): Promise<void>;
   disconnect(): void | Promise<void>;
-  getState(): GameState;
-  subscribe(listener: (state: GameState) => void): Unsubscribe;
-  sendAction(action: GameAction): void;
-  replaceState(state: GameState): void;
+  getState(): TState;
+  subscribe(listener: (state: TState) => void): Unsubscribe;
+  sendAction(action: TAction): void;
+  replaceState(state: TState): void;
 };
 
-export const createGameEngine = ({
+export const createGameEngine = <TState, TAction>({
   transport,
-  syncMode,
-  initialState = createInitialState(),
+  definition,
+  syncMode = "action",
+  initialState = definition.createInitialState(),
   middleware = []
-}: GameEngineOptions): GameEngine => {
+}: GameEngineOptions<TState, TAction>): GameEngine<TState, TAction> => {
   let state = initialState;
-  const listeners = new Set<(state: GameState) => void>();
+  const listeners = new Set<(state: TState) => void>();
 
   const notify = () => {
     listeners.forEach((listener) => listener(state));
@@ -47,9 +43,9 @@ export const createGameEngine = ({
 
   const applyAction = (unsafeAction: unknown) => {
     try {
-      const action = parseGameAction(unsafeAction);
+      const action = definition.actionSchema.parse(unsafeAction) as TAction;
       middleware.forEach((entry) => entry.beforeApply?.(action, state));
-      const nextState = gameReducer(state, action);
+      const nextState = definition.reducer(state, action);
 
       if (nextState !== state) {
         state = nextState;
@@ -61,9 +57,13 @@ export const createGameEngine = ({
     }
   };
 
-  const replaceState = (unsafeState: GameState) => {
+  const replaceState = (unsafeState: unknown) => {
     try {
-      state = parseGameState(unsafeState);
+      if (definition.stateSchema) {
+        state = definition.stateSchema.parse(unsafeState) as TState;
+      } else {
+        state = unsafeState as TState;
+      }
       middleware.forEach((entry) => entry.onStateReplace?.(state));
       notify();
     } catch (error) {
@@ -98,9 +98,9 @@ export const createGameEngine = ({
     },
     sendAction: (unsafeAction) => {
       try {
-        const action = parseGameAction(unsafeAction);
+        const action = definition.actionSchema.parse(unsafeAction) as TAction;
         middleware.forEach((entry) => entry.beforeSend?.(action, state));
-        transport.sendAction(action);
+        transport.sendAction(action as unknown);
       } catch (error) {
         reportError(error);
       }

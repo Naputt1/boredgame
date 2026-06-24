@@ -1,5 +1,3 @@
-import { GameState } from "@boredgame/core";
-import { GameAction } from "@boredgame/schemas";
 import { GameTransport, Unsubscribe } from "./GameTransport";
 import {
   ClientMessage,
@@ -24,8 +22,8 @@ export class WebSocketTransport implements GameTransport {
 
   private seq = 0;
 
-  private actionListeners = new Set<(action: GameAction) => void>();
-  private stateListeners = new Set<(state: GameState) => void>();
+  private actionListeners = new Set<(action: unknown) => void>();
+  private stateListeners = new Set<(state: unknown) => void>();
   private peerLeftListeners = new Set<(playerId: string) => void>();
   private peerJoinedListeners = new Set<(playerId: string) => void>();
   private errorListeners = new Set<(payload: { code: string; message: string }) => void>();
@@ -57,20 +55,20 @@ export class WebSocketTransport implements GameTransport {
     await this.openConnection();
   }
 
-  sendAction(action: GameAction): void {
+  sendAction(action: unknown): void {
     this.send({ type: "action", payload: { action } });
   }
 
-  sendState(_state: GameState): void {
+  sendState(_state: unknown): void {
     // Not used by WebSocketTransport — authoritative state comes from the server.
   }
 
-  onAction(callback: (action: GameAction) => void): Unsubscribe {
+  onAction(callback: (action: unknown) => void): Unsubscribe {
     this.actionListeners.add(callback);
     return () => this.actionListeners.delete(callback);
   }
 
-  onStateUpdate(callback: (state: GameState) => void): Unsubscribe {
+  onStateUpdate(callback: (state: unknown) => void): Unsubscribe {
     this.stateListeners.add(callback);
     return () => this.stateListeners.delete(callback);
   }

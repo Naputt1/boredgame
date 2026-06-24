@@ -6,9 +6,5 @@
   "exports": {
     ".": "./index.ts",
     "./*": "./*"
-  },
-  "dependencies": {
-    "@boredgame/core": "workspace:*",
-    "@boredgame/schemas": "workspace:*"
   }
 }

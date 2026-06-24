@@ -1,14 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { createInitialState, gameReducer, replayActions } from ".";
-import { GAME_ACTION_VERSION, GameAction } from "@boredgame/schemas";
+import { createInitialState, demoGameReducer, replayActions } from ".";
+import { GAME_ACTION_VERSION, DemoGameAction } from "./actions";
 
-const meta = (actionId: string, playerId = "player-1"): GameAction["meta"] => ({
+const meta = (actionId: string, playerId = "player-1"): DemoGameAction["meta"] => ({
   playerId,
   timestamp: 1,
   actionId
 });
 
-const joinAction = (actionId = "join-1"): GameAction => ({
+const joinAction = (actionId = "join-1"): DemoGameAction => ({
   type: "player.joined",
   version: GAME_ACTION_VERSION,
   payload: {
@@ -21,7 +21,7 @@ const joinAction = (actionId = "join-1"): GameAction => ({
   meta: meta(actionId)
 });
 
-const moveAction = (actionId = "move-1", x = 2, y = 3): GameAction => ({
+const moveAction = (actionId = "move-1", x = 2, y = 3): DemoGameAction => ({
   type: "token.moved",
   version: GAME_ACTION_VERSION,
   payload: {
@@ -31,10 +31,10 @@ const moveAction = (actionId = "move-1", x = 2, y = 3): GameAction => ({
   meta: meta(actionId)
 });
 
-describe("gameReducer", () => {
+describe("demoGameReducer", () => {
   it("joins players immutably", () => {
     const initialState = createInitialState();
-    const nextState = gameReducer(initialState, joinAction());
+    const nextState = demoGameReducer(initialState, joinAction());
 
     expect(nextState).not.toBe(initialState);
     expect(initialState.players).toEqual({});
@@ -43,24 +43,24 @@ describe("gameReducer", () => {
   });
 
   it("moves tokens within board bounds", () => {
-    const joined = gameReducer(createInitialState(), joinAction());
-    const moved = gameReducer(joined, moveAction());
+    const joined = demoGameReducer(createInitialState(), joinAction());
+    const moved = demoGameReducer(joined, moveAction());
 
     expect(moved.tokens["token-1"]?.position).toEqual({ x: 2, y: 3 });
   });
 
   it("records but ignores out-of-bounds moves", () => {
-    const joined = gameReducer(createInitialState(), joinAction());
-    const moved = gameReducer(joined, moveAction("move-out", 99, 99));
+    const joined = demoGameReducer(createInitialState(), joinAction());
+    const moved = demoGameReducer(joined, moveAction("move-out", 99, 99));
 
     expect(moved.tokens["token-1"]?.position).toEqual({ x: 0, y: 0 });
     expect(moved.appliedActionIds).toContain("move-out");
   });
 
   it("does not apply duplicate action ids twice", () => {
-    const joined = gameReducer(createInitialState(), joinAction());
-    const moved = gameReducer(joined, moveAction("duplicate", 1, 1));
-    const duplicate = gameReducer(moved, moveAction("duplicate", 4, 4));
+    const joined = demoGameReducer(createInitialState(), joinAction());
+    const moved = demoGameReducer(joined, moveAction("duplicate", 1, 1));
+    const duplicate = demoGameReducer(moved, moveAction("duplicate", 4, 4));
 
     expect(duplicate).toBe(moved);
     expect(duplicate.tokens["token-1"]?.position).toEqual({ x: 1, y: 1 });
@@ -75,8 +75,8 @@ describe("gameReducer", () => {
   });
 
   it("resets to initial state and records reset action", () => {
-    const joined = gameReducer(createInitialState(), joinAction());
-    const reset = gameReducer(joined, {
+    const joined = demoGameReducer(createInitialState(), joinAction());
+    const reset = demoGameReducer(joined, {
       type: "game.reset",
       version: GAME_ACTION_VERSION,
       payload: {},
@@ -90,7 +90,7 @@ describe("gameReducer", () => {
 
   it("rejects move for nonexistent token", () => {
     const state = createInitialState();
-    const result = gameReducer(state, moveAction("no-token-move", 4, 5));
+    const result = demoGameReducer(state, moveAction("no-token-move", 4, 5));
 
     expect(result.tokens).toEqual({});
     expect(result.appliedActionIds).toContain("no-token-move");
@@ -110,7 +110,7 @@ describe("gameReducer", () => {
 
   it("does not perform version validation (delegated to schema parser)", () => {
     const state = createInitialState();
-    const result = gameReducer(state, {
+    const result = demoGameReducer(state, {
       ...joinAction("bad-version"),
       version: 999
     });
@@ -128,7 +128,7 @@ describe("gameReducer", () => {
   it("does not mutate inputs during replay", () => {
     const initialState = createInitialState();
     const action = joinAction("immutable-1");
-    const actions: readonly GameAction[] = [action];
+    const actions: readonly DemoGameAction[] = [action];
     const actionSnapshot = { ...action, meta: { ...action.meta } };
 
     replayActions(initialState, actions);

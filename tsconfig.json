@@ -17,11 +17,12 @@
     "jsx": "react-jsx",
     "paths": {
       "@boredgame/core": ["./src/core/index.ts"],
+      "@boredgame/demo-game": ["./src/demo-game/index.ts"],
       "@boredgame/engine": ["./src/engine/index.ts"],
       "@boredgame/platform": ["./src/platform/src/index.ts"],
       "@boredgame/react": ["./src/react/src/index.ts"],
-      "@boredgame/schemas": ["./src/schemas/index.ts"],
       "@boredgame/transport": ["./src/transport/index.ts"],
+      "@boredgame/utils": ["./src/utils/index.ts"],
       "@boredgame/vite-plugin": ["./src/vite-plugin/src/index.ts"]
     }
   },
