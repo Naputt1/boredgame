@@ -1,12 +1,14 @@
-import { GameTransport, Unsubscribe } from "./GameTransport";
+import { GameTransport, Unsubscribe, ConnectionState } from "./GameTransport";
 
 export class LocalTransport implements GameTransport {
   private actionListeners = new Set<(action: unknown) => void>();
   private stateListeners = new Set<(state: unknown) => void>();
+  private connectionStateListeners = new Set<(state: ConnectionState) => void>();
   private connectedRoomId: string | null = null;
 
   async connect(roomId: string): Promise<void> {
     this.connectedRoomId = roomId;
+    this.connectionStateListeners.forEach((l) => l("connected"));
   }
 
   sendAction(action: unknown): void {
@@ -35,7 +37,18 @@ export class LocalTransport implements GameTransport {
     return () => this.stateListeners.delete(callback);
   }
 
+  onConnectionStateChange(callback: (state: ConnectionState) => void): Unsubscribe {
+    this.connectionStateListeners.add(callback);
+
+    if (this.connectedRoomId) {
+      callback("connected");
+    }
+
+    return () => this.connectionStateListeners.delete(callback);
+  }
+
   disconnect(): void {
     this.connectedRoomId = null;
+    this.connectionStateListeners.forEach((l) => l("disconnected"));
   }
 }

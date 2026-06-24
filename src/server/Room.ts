@@ -1,18 +1,22 @@
 import { WebSocket } from "ws";
 import type { GameDefinition, SyncMode } from "@boredgame/core";
 import {
-  Envelope,
-  ServerMessage,
+  type Envelope,
+  type ServerMessage,
   WSPROTO_VERSION
 } from "@boredgame/transport";
+import { validateAuthoritativeAction } from "@boredgame/demo-game";
+import type { ValidationResult } from "@boredgame/demo-game";
 
 type ConnectedPlayer = {
   playerId: string;
   socket: WebSocket;
   syncMode: SyncMode;
+  protocolVersion: number;
 };
 
 const FULL_SNAPSHOT_THRESHOLD = 50;
+const DEFAULT_MAX_ACTION_LOG = 500;
 
 export class Room {
   readonly roomId: string;
@@ -21,11 +25,18 @@ export class Room {
   private state: unknown;
   private actionLog: unknown[] = [];
   private nextSeq = 0;
+  private maxActionLogSize: number;
+  private lastPruneSnapshot: unknown = null;
 
-  constructor(roomId: string, definition: GameDefinition<unknown, unknown>) {
+  constructor(
+    roomId: string,
+    definition: GameDefinition<unknown, unknown>,
+    maxActionLogSize: number = DEFAULT_MAX_ACTION_LOG
+  ) {
     this.roomId = roomId;
     this.definition = definition;
     this.state = definition.createInitialState();
+    this.maxActionLogSize = maxActionLogSize;
   }
 
   get isEmpty(): boolean {
@@ -36,18 +47,19 @@ export class Room {
     socket: WebSocket,
     playerId: string,
     syncMode: SyncMode,
-    knownActionIds: string[]
+    knownActionIds: string[],
+    protocolVersion: number = WSPROTO_VERSION
   ): void {
     const isNew = !this.players.has(playerId);
 
-    this.players.set(playerId, { playerId, socket, syncMode });
+    this.players.set(playerId, { playerId, socket, syncMode, protocolVersion });
 
     if (isNew) {
       this.broadcast({ type: "peer-joined", payload: { playerId } }, playerId);
     }
 
     if (syncMode === "action") {
-      this.send(socket, {
+      this.send(socket, protocolVersion, {
         type: "action-replay",
         payload: { actions: this.actionLog }
       });
@@ -57,13 +69,13 @@ export class Room {
     const missingCount = this.actionLog.length - knownActionIds.length;
 
     if (missingCount > FULL_SNAPSHOT_THRESHOLD) {
-      this.send(socket, {
+      this.send(socket, protocolVersion, {
         type: "state-snapshot",
         payload: { state: this.state }
       });
     } else {
       const replay = this.actionLog.slice(knownActionIds.length);
-      this.send(socket, {
+      this.send(socket, protocolVersion, {
         type: "action-replay",
         payload: { actions: replay }
       });
@@ -76,32 +88,57 @@ export class Room {
     this.broadcast({ type: "peer-left", payload: { playerId } });
   }
 
-  handleAction(rawAction: unknown, _senderPlayerId: string): void {
+  handleAction(rawAction: unknown, senderPlayerId: string): void {
     let action: unknown;
 
     try {
       action = this.definition.actionSchema.parse(rawAction);
     } catch {
+      this.sendToPlayer(senderPlayerId, {
+        type: "error",
+        payload: { code: "INVALID_ACTION", message: "Action failed schema validation" }
+      });
+      return;
+    }
+
+    const player = this.players.get(senderPlayerId);
+    if (!player) {
+      return;
+    }
+
+    const result = validateAuthoritativeAction(
+      action as Parameters<typeof validateAuthoritativeAction>[0],
+      this.state as Parameters<typeof validateAuthoritativeAction>[1],
+      senderPlayerId
+    ) as ValidationResult;
+
+    if (!result.valid) {
+      this.sendToPlayer(senderPlayerId, {
+        type: "error",
+        payload: { code: result.code, message: result.message }
+      });
       return;
     }
 
     this.actionLog.push(action);
 
-    if (this.syncModeForPlayer(_senderPlayerId) === "action") {
+    this.state = this.definition.reducer(this.state, action);
+
+    if (this.actionLog.length >= this.maxActionLogSize) {
+      this.pruneActionLog();
+    }
+
+    if (player.syncMode === "action") {
       this.broadcast({ type: "action-relay", payload: { action } });
       return;
     }
 
-    this.state = this.definition.reducer(this.state, action);
     this.broadcast({ type: "state-snapshot", payload: { state: this.state } });
   }
 
-  private syncModeForPlayer(playerId: string): SyncMode | undefined {
-    return this.players.get(playerId)?.syncMode;
-  }
-
-  sendSnapshot(socket: WebSocket): void {
-    this.send(socket, {
+  sendSnapshot(socket: WebSocket, protocolVersion?: number): void {
+    const ver = protocolVersion ?? WSPROTO_VERSION;
+    this.send(socket, ver, {
       type: "state-snapshot",
       payload: { state: this.state }
     });
@@ -116,26 +153,50 @@ export class Room {
     }
   }
 
+  private pruneActionLog(): void {
+    const snapshotState = this.actionLog.reduce<unknown>(
+      (s, a) => this.definition.reducer(s, a as Parameters<typeof this.definition.reducer>[1]),
+      this.lastPruneSnapshot ?? this.state
+    );
+
+    this.lastPruneSnapshot = snapshotState;
+    this.actionLog = [];
+  }
+
+  private sendToPlayer(playerId: string, msg: ServerMessage): void {
+    const player = this.players.get(playerId);
+    if (player) {
+      this.send(player.socket, player.protocolVersion, msg);
+    }
+  }
+
   // ── Private ─────────────────────────────────────────────
 
   private broadcast(msg: ServerMessage, excludePlayerId?: string): void {
     for (const [pid, player] of this.players) {
       if (pid !== excludePlayerId) {
-        this.send(player.socket, msg);
+        this.send(player.socket, player.protocolVersion, msg);
       }
     }
   }
 
-  private send(socket: WebSocket, msg: ServerMessage): void {
+  private send(socket: WebSocket, ver: number, msg: ServerMessage): void {
     if (socket.readyState !== WebSocket.OPEN) {
       return;
     }
 
     const envelope: Envelope<ServerMessage> = {
-      ver: WSPROTO_VERSION,
+      ver,
       seq: this.nextSeq++,
       msg
     };
+
+    // NOTE: For production, large envelopes can be compressed via zlib:
+    //   const json = JSON.stringify(envelope);
+    //   if (json.length > 1024) {
+    //     const deflated = deflateSync(Buffer.from(json)).toString("base64");
+    //     socket.send(JSON.stringify({ ...envelope, compressed: true, data: deflated }));
+    //   }
 
     socket.send(JSON.stringify(envelope));
   }

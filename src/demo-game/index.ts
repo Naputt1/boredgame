@@ -39,6 +39,9 @@ export type {
   Token
 } from "./state";
 
+export { validateAuthoritativeAction } from "./serverValidation";
+export type { ValidationResult } from "./serverValidation";
+
 export const demoGameDefinition: GameDefinition<DemoGameState, DemoGameAction> = {
   id: "boredgame-demo",
   name: "Boredgame Demo",

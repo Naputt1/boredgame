@@ -1,8 +1,10 @@
 import { WebSocketServer, WebSocket } from "ws";
 import {
-  ClientMessage,
-  Envelope,
-  WSPROTO_VERSION
+  type ClientMessage,
+  type Envelope,
+  WSPROTO_VERSION,
+  WSPROTO_MIN_VERSION,
+  WSPROTO_MAX_VERSION
 } from "@boredgame/transport";
 import { demoGameDefinition } from "@boredgame/demo-game";
 import { Room } from "./Room";
@@ -20,6 +22,8 @@ wss.on("connection", (socket: WebSocket, req) => {
   const roomId = url.searchParams.get("roomId") ?? "default";
   const playerId = url.searchParams.get("playerId");
 
+  let negotiatedVersion = WSPROTO_VERSION;
+
   if (!playerId) {
     sendError(socket, "MISSING_PLAYER_ID", "playerId query param is required");
     socket.close();
@@ -36,12 +40,37 @@ wss.on("connection", (socket: WebSocket, req) => {
       return;
     }
 
-    if (envelope.ver !== WSPROTO_VERSION) {
-      sendError(socket, "BAD_VERSION", `Expected version ${WSPROTO_VERSION}`);
+    const clientVer = envelope.ver;
+    const msg = envelope.msg;
+
+    if (msg.type === "join-room" && msg.payload.version) {
+      const clientMin = msg.payload.version.min;
+      const clientMax = msg.payload.version.max;
+
+      if (clientMax < WSPROTO_MIN_VERSION || clientMin > WSPROTO_MAX_VERSION) {
+        sendError(socket, "INCOMPATIBLE_VERSION",
+          `Server supports [${WSPROTO_MIN_VERSION}, ${WSPROTO_MAX_VERSION}], client sent [${clientMin}, ${clientMax}]`
+        );
+        socket.close();
+        return;
+      }
+
+      negotiatedVersion = Math.min(clientMax, WSPROTO_MAX_VERSION);
+
+      const room = getOrCreateRoom(roomId);
+      room.join(socket, msg.payload.playerId, msg.payload.syncMode, msg.payload.knownActionIds, negotiatedVersion);
+
+      sendEnvelope(socket, negotiatedVersion, 0, {
+        type: "join-room-ack",
+        payload: { chosenVersion: negotiatedVersion, playerId: msg.payload.playerId }
+      });
       return;
     }
 
-    const msg = envelope.msg;
+    if (clientVer !== negotiatedVersion) {
+      sendError(socket, "BAD_VERSION", `Expected version ${negotiatedVersion}, got ${clientVer}`);
+      return;
+    }
 
     switch (msg.type) {
       case "join-room": {
@@ -93,15 +122,21 @@ function sendError(
   code: string,
   message: string
 ): void {
+  sendEnvelope(socket, WSPROTO_VERSION, 0, {
+    type: "error",
+    payload: { code, message }
+  });
+}
+
+function sendEnvelope(
+  socket: WebSocket,
+  ver: number,
+  seq: number,
+  msg: { type: string; payload: unknown }
+): void {
   if (socket.readyState !== WebSocket.OPEN) {
     return;
   }
 
-  const envelope: Envelope<{ type: "error"; payload: { code: string; message: string } }> = {
-    ver: WSPROTO_VERSION,
-    seq: 0,
-    msg: { type: "error", payload: { code, message } }
-  };
-
-  socket.send(JSON.stringify(envelope));
+  socket.send(JSON.stringify({ ver, seq, msg }));
 }

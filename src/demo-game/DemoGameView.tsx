@@ -43,7 +43,8 @@ export const DemoGameView = ({
   state,
   playerId,
   sendAction,
-  participants
+  participants,
+  connected
 }: GameRendererProps<DemoGameState, DemoGameAction>) => {
   const displayName = useCallback(
     (pid: string): string => {
@@ -60,7 +61,7 @@ export const DemoGameView = ({
   );
 
   useEffect(() => {
-    if (state.players[playerId]) {
+    if (!connected || state.players[playerId]) {
       return;
     }
 
@@ -74,7 +75,7 @@ export const DemoGameView = ({
         { x: playerIndex, y: playerIndex }
       )
     );
-  }, [playerId, sendAction, state.players, displayName]);
+  }, [playerId, sendAction, state.players, displayName, connected]);
 
   const moveToken = useCallback(
     (to: BoardPosition) => {

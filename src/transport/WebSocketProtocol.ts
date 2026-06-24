@@ -1,11 +1,24 @@
 export type SyncMode = "action" | "state";
 
 export const WSPROTO_VERSION = 1;
+export const WSPROTO_MIN_VERSION = 1;
+export const WSPROTO_MAX_VERSION = 1;
+
+export type VersionRange = {
+  min: number;
+  max: number;
+};
 
 export type JoinRoomPayload = {
   playerId: string;
   syncMode: SyncMode;
   knownActionIds: string[];
+  version?: VersionRange;
+};
+
+export type JoinRoomAckPayload = {
+  chosenVersion: number;
+  playerId: string;
 };
 
 export type ActionPayload = {
@@ -52,10 +65,12 @@ export type ServerMessage =
   | { type: "action-replay"; payload: ActionReplayPayload }
   | { type: "peer-joined"; payload: PeerJoinedPayload }
   | { type: "peer-left"; payload: PeerLeftPayload }
-  | { type: "error"; payload: ErrorPayload };
+  | { type: "error"; payload: ErrorPayload }
+  | { type: "join-room-ack"; payload: JoinRoomAckPayload };
 
 export type Envelope<T> = {
-  ver: typeof WSPROTO_VERSION;
+  ver: number;
   seq: number;
   msg: T;
+  compressed?: boolean;
 };

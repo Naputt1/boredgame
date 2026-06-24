@@ -17,6 +17,7 @@ export type GameRendererProps<TState, TAction> = {
   playerId: string;
   sendAction: (action: TAction) => void;
   participants: Array<{ id: string; username: string; globalName?: string }>;
+  connected: boolean;
 };
 
 export type GameDefinition<TState, TAction> = {

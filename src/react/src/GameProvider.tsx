@@ -10,12 +10,17 @@ import {
 import type { GameDefinition, GameEngineMiddleware, SyncMode } from "@boredgame/core";
 import { createGameEngine } from "@boredgame/engine";
 import type { GameEngine } from "@boredgame/engine";
-import type { GameTransport } from "@boredgame/transport";
+import type { GameTransport, ConnectionState } from "@boredgame/transport";
 
 export type GameParticipant = {
   id: string;
   username: string;
   globalName?: string;
+};
+
+export type ConnectionStatus = {
+  state: ConnectionState;
+  lastError: { code: string; message: string } | null;
 };
 
 type GameProviderProps<TState, TAction> = {
@@ -34,6 +39,7 @@ type GameContextValue = {
   state: unknown;
   sendAction: (action: unknown) => void;
   connected: boolean;
+  connectionStatus: ConnectionStatus;
   playerId: string;
   roomId: string;
   participants: GameParticipant[];
@@ -65,7 +71,10 @@ export const GameProvider = <TState, TAction>({
 }: GameProviderProps<TState, TAction>) => {
   const initialStateRef = useRef(initialState ?? definition.createInitialState());
   const [state, setState] = useState(initialStateRef.current);
-  const [connected, setConnected] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>({
+    state: "connecting",
+    lastError: null
+  });
 
   const engine = useMemo<GameEngine<TState, TAction>>(
     () => createGameEngine({
@@ -82,35 +91,65 @@ export const GameProvider = <TState, TAction>({
     const unsubscribe = engine.subscribe(setState);
     let cancelled = false;
 
+    if (transport.onConnectionStateChange) {
+      transport.onConnectionStateChange((connState) => {
+        if (!cancelled) {
+          setConnectionStatus((prev) => ({ ...prev, state: connState }));
+        }
+      });
+    }
+
+    if (transport.onTransportError) {
+      transport.onTransportError((error) => {
+        if (!cancelled) {
+          setConnectionStatus((prev) => ({ ...prev, lastError: error }));
+        }
+      });
+    }
+
     engine
       .connect(roomId)
       .then(() => {
         if (!cancelled) {
-          setConnected(true);
+          setConnectionStatus((prev) => ({ ...prev, state: "connected" }));
         }
       })
       .catch((error) => {
-        console.error("Failed to connect game engine", error);
+        const message =
+          error instanceof Error ? error.message : String(error);
+        if (message !== "Connection cancelled") {
+          console.error("Failed to connect game engine", error);
+        }
+        if (!cancelled) {
+          setConnectionStatus((prev) => ({
+            ...prev,
+            state: "disconnected",
+            lastError: { code: "CONNECT_FAILED", message }
+          }));
+        }
       });
 
     return () => {
       cancelled = true;
-      setConnected(false);
+      setConnectionStatus({ state: "disconnected", lastError: null });
       unsubscribe();
       void engine.disconnect();
     };
-  }, [engine, roomId]);
+  }, [engine, roomId, transport]);
+
+  const connected = connectionStatus.state === "connected";
 
   const value = useMemo<GameContextValue>(
     () => ({
       state,
       sendAction: engine.sendAction as (action: unknown) => void,
       connected,
+      connectionStatus,
       playerId,
       roomId,
       participants
     }),
-    [connected, engine.sendAction, playerId, roomId, state, participants]
+    [connected, connectionStatus, engine.sendAction, playerId, roomId, state, participants]
   );
 
   return (
@@ -129,6 +168,7 @@ export const useGame = <TState = unknown, TAction = unknown>(): {
   state: TState;
   sendAction: (action: TAction) => void;
   connected: boolean;
+  connectionStatus: ConnectionStatus;
   playerId: string;
   roomId: string;
   participants: GameParticipant[];
@@ -143,6 +183,7 @@ export const useGame = <TState = unknown, TAction = unknown>(): {
     state: TState;
     sendAction: (action: TAction) => void;
     connected: boolean;
+    connectionStatus: ConnectionStatus;
     playerId: string;
     roomId: string;
     participants: GameParticipant[];
