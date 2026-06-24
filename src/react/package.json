@@ -1,0 +1,21 @@
+{
+  "name": "@boredgame/react",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "dependencies": {
+    "@boredgame/core": "workspace:*",
+    "@boredgame/engine": "workspace:*",
+    "@boredgame/schemas": "workspace:*",
+    "@boredgame/transport": "workspace:*"
+  },
+  "peerDependencies": {
+    "react": "^18"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.18",
+    "typescript": "^5.7.3"
+  }
+}

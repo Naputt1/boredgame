@@ -11,8 +11,12 @@
   "dependencies": {
     "@boredgame/core": "workspace:*",
     "@boredgame/engine": "workspace:*",
+    "@boredgame/platform": "workspace:*",
+    "@boredgame/react": "workspace:*",
     "@boredgame/schemas": "workspace:*",
     "@boredgame/transport": "workspace:*",
+    "@boredgame/vite-plugin": "workspace:*",
+    "@discord/embedded-app-sdk": "^2.5.0",
     "@pixi/react": "^7.1.2",
     "pixi.js": "^7.4.2",
     "react": "^18.3.1",

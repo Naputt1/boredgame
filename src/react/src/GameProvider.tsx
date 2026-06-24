@@ -12,6 +12,12 @@ import { createInitialState, GameState } from "@boredgame/core";
 import { GameAction } from "@boredgame/schemas";
 import { GameTransport } from "@boredgame/transport";
 
+export type GameParticipant = {
+  id: string;
+  username: string;
+  globalName?: string;
+};
+
 type GameProviderProps = {
   children: ReactNode;
   playerId: string;
@@ -19,6 +25,7 @@ type GameProviderProps = {
   transport: GameTransport;
   syncMode?: SyncMode;
   initialState?: GameState;
+  participants?: GameParticipant[];
 };
 
 type GameContextValue = {
@@ -27,6 +34,7 @@ type GameContextValue = {
   connected: boolean;
   playerId: string;
   roomId: string;
+  participants: GameParticipant[];
 };
 
 const GameContext = createContext<GameContextValue | null>(null);
@@ -37,7 +45,8 @@ export const GameProvider = ({
   roomId,
   transport,
   syncMode = "action",
-  initialState
+  initialState,
+  participants = []
 }: GameProviderProps) => {
   const initialStateRef = useRef(initialState ?? createInitialState());
   const [state, setState] = useState(initialStateRef.current);
@@ -89,9 +98,10 @@ export const GameProvider = ({
       sendAction: engine.sendAction,
       connected,
       playerId,
-      roomId
+      roomId,
+      participants
     }),
-    [connected, engine.sendAction, playerId, roomId, state]
+    [connected, engine.sendAction, playerId, roomId, state, participants]
   );
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;

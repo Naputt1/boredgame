@@ -1,0 +1,42 @@
+import { createContext, ReactNode, useContext, useMemo } from "react";
+import { GameProvider } from "@boredgame/react";
+import { createTransport } from "boredgame:transport";
+import type { PlatformContext } from "../types";
+import { useDiscordContext } from "./useDiscordContext";
+
+const PlatformCtx = createContext<PlatformContext | null>(null);
+
+export const usePlatform = (): PlatformContext => {
+  const value = useContext(PlatformCtx);
+  if (!value) {
+    throw new Error("usePlatform must be used inside PlatformProvider");
+  }
+  return value;
+};
+
+export const PlatformProvider = ({ children }: { children: ReactNode }) => {
+  const ctx = useDiscordContext();
+
+  const transport = useMemo(
+    () =>
+      createTransport({
+        playerId: ctx.userId,
+        url: import.meta.env.VITE_WS_URL as string | undefined,
+        instanceId: ctx.instanceId,
+      }),
+    [ctx.userId, ctx.instanceId]
+  );
+
+  return (
+    <PlatformCtx.Provider value={ctx}>
+      <GameProvider
+        playerId={ctx.userId}
+        roomId={ctx.instanceId}
+        transport={transport}
+        participants={ctx.participants}
+      >
+        {children}
+      </GameProvider>
+    </PlatformCtx.Provider>
+  );
+};

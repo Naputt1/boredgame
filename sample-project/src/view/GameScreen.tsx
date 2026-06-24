@@ -5,15 +5,22 @@ import {
   createGameResetAction
 } from "@boredgame/schemas";
 import { BoardPosition } from "@boredgame/core";
+import { useGame } from "@boredgame/react";
 import { BoardStage } from "./BoardStage";
-import { useGame } from "./GameProvider";
 
 const playerPalette = ["#2563eb", "#dc2626", "#059669", "#d97706", "#7c3aed"];
 
-const playerName = (playerId: string): string => `Player ${playerId.slice(0, 4)}`;
+const displayName = (
+  playerId: string,
+  participants: { id: string; username: string; globalName?: string }[]
+): string => {
+  const match = participants.find((p) => p.id === playerId);
+  if (match) return match.globalName ?? match.username;
+  return `Player ${playerId.slice(0, 4)}`;
+};
 
 export const GameScreen = () => {
-  const { state, sendAction, connected, playerId, roomId } = useGame();
+  const { state, sendAction, connected, playerId, roomId, participants } = useGame();
   const ownToken = useMemo(
     () => Object.values(state.tokens).find((token) => token.ownerId === playerId),
     [playerId, state.tokens]
@@ -28,13 +35,13 @@ export const GameScreen = () => {
     sendAction(
       createPlayerJoinedAction(
         playerId,
-        playerName(playerId),
+        displayName(playerId, participants),
         playerPalette[playerIndex],
         `token:${playerId}`,
         { x: playerIndex, y: playerIndex }
       )
     );
-  }, [connected, playerId, sendAction, state.players]);
+  }, [connected, playerId, sendAction, state.players, participants]);
 
   const moveToken = (to: BoardPosition) => {
     if (!ownToken) {
@@ -75,7 +82,7 @@ export const GameScreen = () => {
                   className="player-swatch"
                   style={{ backgroundColor: player.color }}
                 />
-                <span>{player.name}</span>
+                <span>{displayName(player.id, participants)}</span>
               </li>
             ))}
           </ul>
@@ -83,7 +90,7 @@ export const GameScreen = () => {
           <ul>
             {Object.values(state.tokens).map((token) => (
               <li key={token.id}>
-                <span>{state.players[token.ownerId]?.name ?? token.ownerId}</span>
+                <span>{displayName(token.ownerId, participants)}</span>
                 <span className="token-position">
                   {token.position.x}, {token.position.y}
                 </span>

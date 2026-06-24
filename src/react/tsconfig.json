@@ -1,7 +1,6 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "useDefineForClassFields": true,
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "allowJs": false,
     "skipLibCheck": true,
@@ -14,15 +13,7 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
-    "jsx": "react-jsx",
-    "paths": {
-      "@boredgame/core": ["../src/core"],
-      "@boredgame/engine": ["../src/engine"],
-      "@boredgame/react": ["../src/react"],
-      "@boredgame/schemas": ["../src/schemas"],
-      "@boredgame/transport": ["../src/transport"],
-      "@boredgame/platform": ["../src/platform/src/discord/index.ts"]
-    }
+    "jsx": "react-jsx"
   },
   "include": ["src"]
 }

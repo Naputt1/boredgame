@@ -1,0 +1,25 @@
+{
+  "name": "@boredgame/platform",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "src/auto/index.ts",
+  "types": "src/auto/index.ts",
+  "exports": {
+    ".": "./src/auto/index.ts",
+    "./discord": "./src/discord/index.ts",
+    "./fallback": "./src/fallback/index.ts"
+  },
+  "dependencies": {
+    "@boredgame/react": "workspace:*",
+    "@boredgame/transport": "workspace:*",
+    "@discord/embedded-app-sdk": "^2.5.0"
+  },
+  "peerDependencies": {
+    "react": "^18"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.18",
+    "typescript": "^5.7.3"
+  }
+}
