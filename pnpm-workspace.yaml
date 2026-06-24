@@ -1,5 +1,5 @@
 packages:
-  - "sample-project"
+  - "sample-project/*"
   - "src/*"
 
 allowBuilds:

@@ -20,7 +20,7 @@ export type WebSocketTransportOptions = {
 export class WebSocketTransport implements GameTransport {
   private ws: WebSocket | null = null;
   private roomId: string | null = null;
-  private syncMode: "action" | "state" = "action";
+  private syncMode: "action" | "state" = "state";
   private knownActionIds: string[] = [];
   private negotiatedVersion = WSPROTO_VERSION;
 

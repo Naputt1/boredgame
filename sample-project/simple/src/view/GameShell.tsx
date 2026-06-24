@@ -4,6 +4,7 @@ import { GameSelector } from "@boredgame/react";
 import { PlatformProvider } from "@boredgame/platform";
 import { demoGameDefinition } from "@boredgame/demo-game";
 import { ticTacToeDefinition } from "@boredgame/tic-tac-toe";
+import { saboteurDefinition } from "saboteur-project/definition";
 import { GameScreen } from "./GameScreen";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -12,7 +13,7 @@ type Phase =
   | { type: "play"; definition: any; id: string };
 
 const registry = new GameRegistry();
-registry.registerAll([demoGameDefinition, ticTacToeDefinition]);
+registry.registerAll([demoGameDefinition, ticTacToeDefinition, saboteurDefinition]);
 
 export const GameShell = () => {
   const [phase, setPhase] = useState<Phase>({ type: "select" });

@@ -28,7 +28,7 @@ export type GameEngine<TState, TAction> = {
 export const createGameEngine = <TState, TAction>({
   transport,
   definition,
-  syncMode = "action",
+  syncMode = "state",
   initialState = definition.createInitialState(),
   middleware = []
 }: GameEngineOptions<TState, TAction>): GameEngine<TState, TAction> => {

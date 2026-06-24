@@ -4,7 +4,8 @@
   "packageManager": "pnpm@11.6.0",
   "type": "module",
   "scripts": {
-    "dev:sample": "pnpm --filter sample-project dev",
+    "dev:sample": "pnpm --filter simple-project dev",
+    "dev:saboteur": "pnpm --filter saboteur-project dev",
     "build": "turbo run build",
     "test": "vitest run",
     "test:watch": "vitest"

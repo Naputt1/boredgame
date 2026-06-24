@@ -67,7 +67,7 @@ export const GameProvider = <TState, TAction>({
   playerId,
   roomId,
   transport,
-  syncMode = "action",
+  syncMode = "state",
   initialState,
   participants = EMPTY_PARTICIPANTS,
   middleware = EMPTY_MIDDLEWARE

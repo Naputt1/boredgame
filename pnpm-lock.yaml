@@ -21,38 +21,93 @@ importers:
         specifier: ^2.1.8
         version: 2.1.9(@types/node@26.0.0)
 
-  sample-project:
+  sample-project/saboteur:
     dependencies:
       '@boredgame/core':
         specifier: workspace:*
-        version: link:../src/core
-      '@boredgame/demo-game':
-        specifier: workspace:*
-        version: link:../src/demo-game
+        version: link:../../src/core
       '@boredgame/devtools':
         specifier: workspace:*
-        version: link:../src/devtools
+        version: link:../../src/devtools
       '@boredgame/engine':
         specifier: workspace:*
-        version: link:../src/engine
+        version: link:../../src/engine
       '@boredgame/platform':
         specifier: workspace:*
-        version: link:../src/platform
+        version: link:../../src/platform
       '@boredgame/react':
         specifier: workspace:*
-        version: link:../src/react
+        version: link:../../src/react
       '@boredgame/registry':
         specifier: workspace:*
-        version: link:../src/registry
-      '@boredgame/tic-tac-toe':
-        specifier: workspace:*
-        version: link:../src/tic-tac-toe
+        version: link:../../src/registry
       '@boredgame/transport':
         specifier: workspace:*
-        version: link:../src/transport
+        version: link:../../src/transport
       '@boredgame/vite-plugin':
         specifier: workspace:*
-        version: link:../src/vite-plugin
+        version: link:../../src/vite-plugin
+      '@discord/embedded-app-sdk':
+        specifier: ^2.5.0
+        version: 2.5.0
+      react:
+        specifier: ^18.3.1
+        version: 18.3.1
+      react-dom:
+        specifier: ^18.3.1
+        version: 18.3.1(react@18.3.1)
+      zod:
+        specifier: ^3.25.76
+        version: 3.25.76
+    devDependencies:
+      '@types/react':
+        specifier: ^18.3.18
+        version: 18.3.31
+      '@types/react-dom':
+        specifier: ^18.3.5
+        version: 18.3.7(@types/react@18.3.31)
+      '@vitejs/plugin-react':
+        specifier: ^4.3.4
+        version: 4.7.0(vite@6.4.3(@types/node@26.0.0)(tsx@4.22.4))
+      typescript:
+        specifier: ^5.7.3
+        version: 5.9.3
+      vite:
+        specifier: ^6.0.7
+        version: 6.4.3(@types/node@26.0.0)(tsx@4.22.4)
+
+  sample-project/simple:
+    dependencies:
+      '@boredgame/core':
+        specifier: workspace:*
+        version: link:../../src/core
+      '@boredgame/demo-game':
+        specifier: workspace:*
+        version: link:../../src/demo-game
+      '@boredgame/devtools':
+        specifier: workspace:*
+        version: link:../../src/devtools
+      '@boredgame/engine':
+        specifier: workspace:*
+        version: link:../../src/engine
+      '@boredgame/platform':
+        specifier: workspace:*
+        version: link:../../src/platform
+      '@boredgame/react':
+        specifier: workspace:*
+        version: link:../../src/react
+      '@boredgame/registry':
+        specifier: workspace:*
+        version: link:../../src/registry
+      '@boredgame/tic-tac-toe':
+        specifier: workspace:*
+        version: link:../../src/tic-tac-toe
+      '@boredgame/transport':
+        specifier: workspace:*
+        version: link:../../src/transport
+      '@boredgame/vite-plugin':
+        specifier: workspace:*
+        version: link:../../src/vite-plugin
       '@discord/embedded-app-sdk':
         specifier: ^2.5.0
         version: 2.5.0
@@ -68,6 +123,9 @@ importers:
       react-dom:
         specifier: ^18.3.1
         version: 18.3.1(react@18.3.1)
+      saboteur-project:
+        specifier: workspace:*
+        version: link:../saboteur
       zod:
         specifier: ^3.25.76
         version: 3.25.76
@@ -234,6 +292,9 @@ importers:
       '@boredgame/transport':
         specifier: workspace:*
         version: link:../transport
+      saboteur-project:
+        specifier: workspace:*
+        version: link:../../sample-project/saboteur
       ws:
         specifier: ^8.18.1
         version: 8.21.0

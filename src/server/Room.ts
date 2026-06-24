@@ -13,7 +13,6 @@ type ConnectedPlayer = {
   protocolVersion: number;
 };
 
-const FULL_SNAPSHOT_THRESHOLD = 50;
 const DEFAULT_MAX_ACTION_LOG = 500;
 
 export class Room {
@@ -64,20 +63,10 @@ export class Room {
       return;
     }
 
-    const missingCount = this.actionLog.length - knownActionIds.length;
-
-    if (missingCount > FULL_SNAPSHOT_THRESHOLD) {
-      this.send(socket, protocolVersion, {
-        type: "state-snapshot",
-        payload: { state: this.state }
-      });
-    } else {
-      const replay = this.actionLog.slice(knownActionIds.length);
-      this.send(socket, protocolVersion, {
-        type: "action-replay",
-        payload: { actions: replay }
-      });
-    }
+    this.send(socket, protocolVersion, {
+      type: "state-snapshot",
+      payload: { state: this.state }
+    });
   }
 
   leave(playerId: string): void {
