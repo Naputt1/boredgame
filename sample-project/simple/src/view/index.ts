@@ -1,2 +1,2 @@
-export { GameScreen } from "./GameScreen";
-export { GameShell } from "./GameShell";
+export { GameScreen } from './GameScreen'
+export { GameShell } from './GameShell'

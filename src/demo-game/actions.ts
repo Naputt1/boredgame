@@ -1,55 +1,55 @@
-import { z } from "zod";
+import { z } from 'zod'
 
-export const GAME_ACTION_VERSION = 1;
+export const GAME_ACTION_VERSION = 1
 
 const actionMetaSchema = z.object({
   playerId: z.string().min(1),
   timestamp: z.number().int().nonnegative(),
-  actionId: z.string().min(1)
-});
+  actionId: z.string().min(1),
+})
 
 const positionSchema = z.object({
   x: z.number().int().nonnegative(),
-  y: z.number().int().nonnegative()
-});
+  y: z.number().int().nonnegative(),
+})
 
 export const playerJoinedActionSchema = z.object({
-  type: z.literal("player.joined"),
+  type: z.literal('player.joined'),
   version: z.literal(GAME_ACTION_VERSION),
   payload: z.object({
     playerId: z.string().min(1),
     name: z.string().min(1),
     color: z.string().min(1),
     tokenId: z.string().min(1),
-    startPosition: positionSchema
+    startPosition: positionSchema,
   }),
-  meta: actionMetaSchema
-});
+  meta: actionMetaSchema,
+})
 
 export const tokenMovedActionSchema = z.object({
-  type: z.literal("token.moved"),
+  type: z.literal('token.moved'),
   version: z.literal(GAME_ACTION_VERSION),
   payload: z.object({
     tokenId: z.string().min(1),
-    to: positionSchema
+    to: positionSchema,
   }),
-  meta: actionMetaSchema
-});
+  meta: actionMetaSchema,
+})
 
 export const gameResetActionSchema = z.object({
-  type: z.literal("game.reset"),
+  type: z.literal('game.reset'),
   version: z.literal(GAME_ACTION_VERSION),
   payload: z.object({}).strict(),
-  meta: actionMetaSchema
-});
+  meta: actionMetaSchema,
+})
 
-export const demoGameActionSchema = z.discriminatedUnion("type", [
+export const demoGameActionSchema = z.discriminatedUnion('type', [
   playerJoinedActionSchema,
   tokenMovedActionSchema,
-  gameResetActionSchema
-]);
+  gameResetActionSchema,
+])
 
-export type PlayerJoinedAction = z.infer<typeof playerJoinedActionSchema>;
-export type TokenMovedAction = z.infer<typeof tokenMovedActionSchema>;
-export type GameResetAction = z.infer<typeof gameResetActionSchema>;
-export type DemoGameAction = z.infer<typeof demoGameActionSchema>;
+export type PlayerJoinedAction = z.infer<typeof playerJoinedActionSchema>
+export type TokenMovedAction = z.infer<typeof tokenMovedActionSchema>
+export type GameResetAction = z.infer<typeof gameResetActionSchema>
+export type DemoGameAction = z.infer<typeof demoGameActionSchema>

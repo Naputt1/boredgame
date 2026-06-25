@@ -1,10 +1,11 @@
-import { useGame, LobbyView } from "@boredgame/react";
-import { ConnectionBanner } from "./ConnectionBanner";
+import { useGame, LobbyView } from '@boredgame/react'
+import type { GameDefinition } from '@boredgame/core'
+import { ConnectionBanner } from './ConnectionBanner'
 
 type GameScreenProps = {
-  definition: any;
-  onBack: () => void;
-};
+  definition: GameDefinition<unknown, unknown>
+  onBack: () => void
+}
 
 export const GameScreen = ({ definition, onBack }: GameScreenProps) => {
   const {
@@ -15,20 +16,20 @@ export const GameScreen = ({ definition, onBack }: GameScreenProps) => {
     playerId,
     roomId,
     participants,
-    roomStatus
-  } = useGame();
+    roomStatus,
+  } = useGame()
 
-  if (roomStatus === "lobby" || roomStatus === "starting") {
+  if (roomStatus === 'lobby' || roomStatus === 'starting') {
     return (
       <LobbyView
         gameName={definition.name}
         minPlayers={definition.metadata.minPlayers}
         onBack={onBack}
       />
-    );
+    )
   }
 
-  const Renderer = definition.renderer;
+  const Renderer = definition.renderer
 
   return (
     <>
@@ -40,15 +41,19 @@ export const GameScreen = ({ definition, onBack }: GameScreenProps) => {
             <h1>{definition.name}</h1>
           </div>
           <div className="toolbar-meta">
-            <button type="button" onClick={onBack} style={{ fontSize: 12, padding: "4px 12px" }}>
+            <button
+              type="button"
+              onClick={onBack}
+              style={{ fontSize: 12, padding: '4px 12px' }}
+            >
               Back to games
             </button>
             <span>
-              {connectionStatus.state === "connected"
-                ? "Connected"
-                : connectionStatus.state === "reconnecting"
-                  ? "Reconnecting"
-                  : "Connecting"}
+              {connectionStatus.state === 'connected'
+                ? 'Connected'
+                : connectionStatus.state === 'reconnecting'
+                  ? 'Reconnecting'
+                  : 'Connecting'}
             </span>
             <span>Room {roomId.slice(0, 8)}</span>
           </div>
@@ -63,5 +68,5 @@ export const GameScreen = ({ definition, onBack }: GameScreenProps) => {
         />
       </main>
     </>
-  );
-};
+  )
+}

@@ -10,5 +10,5 @@ export type {
   ServerValidationResult,
   RoomLifecycleState,
   PlayerSlot,
-  RoomConfig
-} from "./gameDefinition";
+  RoomConfig,
+} from './gameDefinition'

@@ -1,26 +1,31 @@
-import { createContext, ReactNode, useContext, useMemo } from "react";
-import { GameProvider } from "@boredgame/react";
-import { createTransport } from "boredgame:transport";
-import type { PlatformContext, PlatformProviderProps } from "../types";
-import { useFallbackContext } from "./useFallbackContext";
+/* eslint-disable react-refresh/only-export-components */
+import { createContext, useContext, useMemo } from 'react'
+import { GameProvider } from '@boredgame/react'
+import { createTransport } from 'boredgame:transport'
+import type { PlatformContext, PlatformProviderProps } from '../types'
+import { useFallbackContext } from './useFallbackContext'
 
-const PlatformCtx = createContext<PlatformContext | null>(null);
+const PlatformCtx = createContext<PlatformContext | null>(null)
 
 export const usePlatform = (): PlatformContext => {
-  const value = useContext(PlatformCtx);
+  const value = useContext(PlatformCtx)
   if (!value) {
-    throw new Error("usePlatform must be used inside PlatformProvider");
+    throw new Error('usePlatform must be used inside PlatformProvider')
   }
-  return value;
-};
+  return value
+}
 
-export const PlatformProvider = ({ children, gameDefinition, middleware }: PlatformProviderProps) => {
-  const ctx = useFallbackContext();
+export const PlatformProvider = ({
+  children,
+  gameDefinition,
+  middleware,
+}: PlatformProviderProps) => {
+  const ctx = useFallbackContext()
 
   const transport = useMemo(
     () => createTransport({ playerId: ctx.userId, gameId: gameDefinition.id }),
     [ctx.userId, gameDefinition.id]
-  );
+  )
 
   return (
     <PlatformCtx.Provider value={ctx}>
@@ -35,5 +40,5 @@ export const PlatformProvider = ({ children, gameDefinition, middleware }: Platf
         {children}
       </GameProvider>
     </PlatformCtx.Provider>
-  );
-};
+  )
+}

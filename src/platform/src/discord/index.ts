@@ -1,1 +1,1 @@
-export { PlatformProvider, usePlatform } from "./DiscordProvider";
+export { PlatformProvider, usePlatform } from './DiscordProvider'

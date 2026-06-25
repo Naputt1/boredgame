@@ -1,35 +1,37 @@
-import type { Plugin } from "vite";
-import type { BoredgamePluginOptions } from "./types";
+import type { Plugin } from 'vite'
+import type { BoredgamePluginOptions } from './types'
 
-const TRANSPORT_ID = "boredgame:transport";
+const TRANSPORT_ID = 'boredgame:transport'
 
 export const boredgame = (options: BoredgamePluginOptions): Plugin => {
-  const platformTarget = `@boredgame/platform/${options.platform}`;
+  const platformTarget = `@boredgame/platform/${options.platform}`
 
   return {
-    name: "boredgame",
+    name: 'boredgame',
 
     resolveId(id, importer) {
-      if (id === "boredgame:transport") {
-        return "\0" + TRANSPORT_ID;
+      if (id === 'boredgame:transport') {
+        return '\0' + TRANSPORT_ID
       }
-      if (id === "@boredgame/platform" && importer) {
-        return this.resolve(platformTarget, importer, { skipSelf: true });
+      if (id === '@boredgame/platform' && importer) {
+        return this.resolve(platformTarget, importer, { skipSelf: true })
       }
-      return null;
+      return null
     },
 
     load(id) {
-      if (id === "\0" + TRANSPORT_ID) {
-        return generateTransportModule(options.transport);
+      if (id === '\0' + TRANSPORT_ID) {
+        return generateTransportModule(options.transport)
       }
-      return null;
+      return null
     },
-  };
-};
+  }
+}
 
-function generateTransportModule(transport: BoredgamePluginOptions["transport"]): string {
-  if (transport === "websocket") {
+function generateTransportModule(
+  transport: BoredgamePluginOptions['transport']
+): string {
+  if (transport === 'websocket') {
     return [
       `import { WebSocketTransport } from "@boredgame/transport";`,
       ``,
@@ -37,7 +39,7 @@ function generateTransportModule(transport: BoredgamePluginOptions["transport"])
       `  const url = opts.url ?? import.meta.env.VITE_WS_URL ?? "ws://localhost:3001";`,
       `  return new WebSocketTransport({ url, playerId: opts.playerId, gameId: opts.gameId });`,
       `};`,
-    ].join("\n");
+    ].join('\n')
   }
 
   return [
@@ -46,5 +48,5 @@ function generateTransportModule(transport: BoredgamePluginOptions["transport"])
     `export const createTransport = (opts) => {`,
     `  return new P2PTransport({ instanceId: opts.instanceId, gameId: opts.gameId });`,
     `};`,
-  ].join("\n");
+  ].join('\n')
 }

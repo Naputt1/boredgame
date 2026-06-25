@@ -1,6 +1,6 @@
 packages:
-  - "sample-project/*"
-  - "src/*"
+  - 'sample-project/*'
+  - 'src/*'
 
 allowBuilds:
   esbuild: true

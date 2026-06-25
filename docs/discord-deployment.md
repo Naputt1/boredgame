@@ -62,10 +62,10 @@ The frontend is a Vite + React app that uses `@boredgame/platform` for Discord i
 
 ### Environment variables
 
-| Variable | Required | Default | Description |
-|----------|----------|---------|-------------|
-| `VITE_DISCORD_CLIENT_ID` | Yes (Discord) | — | Your Discord app's Client ID |
-| `VITE_WS_URL` | Yes | `ws://localhost:3001` | WebSocket server URL |
+| Variable                 | Required      | Default               | Description                  |
+| ------------------------ | ------------- | --------------------- | ---------------------------- |
+| `VITE_DISCORD_CLIENT_ID` | Yes (Discord) | —                     | Your Discord app's Client ID |
+| `VITE_WS_URL`            | Yes           | `ws://localhost:3001` | WebSocket server URL         |
 
 ### Build
 
@@ -149,11 +149,11 @@ For very simple setups, you can adapt the WebSocket server to run on Cloudflare 
 
 ## Environment Variables Reference
 
-| Variable | Where | Description |
-|----------|-------|-------------|
-| `PORT` | Server | WebSocket listen port (default `3001`) |
-| `VITE_DISCORD_CLIENT_ID` | Frontend build | Discord Application Client ID |
-| `VITE_WS_URL` | Frontend build | Server WebSocket URL (e.g. `wss://your-server.com`) |
+| Variable                 | Where          | Description                                         |
+| ------------------------ | -------------- | --------------------------------------------------- |
+| `PORT`                   | Server         | WebSocket listen port (default `3001`)              |
+| `VITE_DISCORD_CLIENT_ID` | Frontend build | Discord Application Client ID                       |
+| `VITE_WS_URL`            | Frontend build | Server WebSocket URL (e.g. `wss://your-server.com`) |
 
 ---
 
@@ -199,10 +199,10 @@ To test inside Discord:
 
 ## Troubleshooting
 
-| Symptom | Likely cause | Fix |
-|---------|-------------|-----|
-| "MISSING_PLAYER_ID" | `playerId` query param not set | Ensure the platform provider passes `playerId` |
-| "INCOMPATIBLE_VERSION" | Client/server protocol mismatch | Deploy matching versions of client and server |
-| Connection refused | WebSocket server not reachable | Check firewall, TLS, and port forwarding |
-| Discord SDK auth fails | Wrong `VITE_DISCORD_CLIENT_ID` | Verify Client ID in Developer Portal |
-| Blank screen after auth | SPA routing issue | Ensure Vite SPA fallback is configured |
+| Symptom                 | Likely cause                    | Fix                                            |
+| ----------------------- | ------------------------------- | ---------------------------------------------- |
+| "MISSING_PLAYER_ID"     | `playerId` query param not set  | Ensure the platform provider passes `playerId` |
+| "INCOMPATIBLE_VERSION"  | Client/server protocol mismatch | Deploy matching versions of client and server  |
+| Connection refused      | WebSocket server not reachable  | Check firewall, TLS, and port forwarding       |
+| Discord SDK auth fails  | Wrong `VITE_DISCORD_CLIENT_ID`  | Verify Client ID in Developer Portal           |
+| Blank screen after auth | SPA routing issue               | Ensure Vite SPA fallback is configured         |

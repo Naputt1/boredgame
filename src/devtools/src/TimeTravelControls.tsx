@@ -1,134 +1,140 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { useGameEngine } from "@boredgame/react";
-import type { ActionLog } from "./createActionLog";
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { useGameEngine } from '@boredgame/react'
+import type { ActionLog } from './createActionLog'
 
 type TimeTravelControlsProps<TAction> = {
-  actionLog: ActionLog<TAction>;
-  reducer: (state: unknown, action: TAction) => unknown;
-  createInitialState: () => unknown;
-  isReplayMode: boolean;
-  onReplayModeChange: (mode: boolean) => void;
-};
+  actionLog: ActionLog<TAction>
+  reducer: (state: unknown, action: TAction) => unknown
+  createInitialState: () => unknown
+  isReplayMode: boolean
+  onReplayModeChange: (mode: boolean) => void
+}
 
 export const TimeTravelControls = <TAction,>({
   actionLog,
   reducer,
   createInitialState,
   isReplayMode,
-  onReplayModeChange
+  onReplayModeChange,
 }: TimeTravelControlsProps<TAction>) => {
-  const engine = useGameEngine();
-  const total = actionLog.size();
-  const [currentStep, setCurrentStep] = useState(-1);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const playInterval = useRef<ReturnType<typeof setInterval> | null>(null);
+  const engine = useGameEngine()
+  const total = actionLog.size()
+  const [currentStep, setCurrentStep] = useState(-1)
+  const [isPlaying, setIsPlaying] = useState(false)
+  const playInterval = useRef<ReturnType<typeof setInterval> | null>(null)
 
   useEffect(() => {
     if (!isReplayMode) {
-      setCurrentStep(-1);
-      setIsPlaying(false);
+      setTimeout(() => {
+        setCurrentStep(-1)
+      }, 0)
+      setTimeout(() => {
+        setIsPlaying(false)
+      }, 0)
       if (playInterval.current) {
-        clearInterval(playInterval.current);
-        playInterval.current = null;
+        clearInterval(playInterval.current)
+        playInterval.current = null
       }
     }
-  }, [isReplayMode]);
+  }, [isReplayMode])
 
   useEffect(() => {
     return () => {
-      if (playInterval.current) clearInterval(playInterval.current);
-    };
-  }, []);
+      if (playInterval.current) clearInterval(playInterval.current)
+    }
+  }, [])
 
   const replayAt = useCallback(
     (step: number) => {
-      if (!engine) return;
-      const actions = actionLog.getUpTo(step);
+      if (!engine) return
+      const actions = actionLog.getUpTo(step)
       const replayed = actions.reduce(
         (state, action) => reducer(state, action),
         createInitialState()
-      );
-      engine.replaceState(replayed);
-      setCurrentStep(step);
+      )
+      engine.replaceState(replayed)
+      setCurrentStep(step)
     },
     [engine, actionLog, reducer, createInitialState]
-  );
+  )
 
   const goToStart = useCallback(() => {
-    if (!engine) return;
-    engine.replaceState(createInitialState());
-    setCurrentStep(-1);
-  }, [engine, createInitialState]);
+    if (!engine) return
+    engine.replaceState(createInitialState())
+    setCurrentStep(-1)
+  }, [engine, createInitialState])
 
   const goBack = useCallback(() => {
-    const next = Math.max(-1, currentStep - 1);
+    const next = Math.max(-1, currentStep - 1)
     if (next === -1) {
-      goToStart();
+      goToStart()
     } else {
-      replayAt(next);
+      replayAt(next)
     }
-  }, [currentStep, goToStart, replayAt]);
+  }, [currentStep, goToStart, replayAt])
 
   const goForward = useCallback(() => {
-    const next = Math.min(total - 1, currentStep + 1);
-    replayAt(next);
-  }, [currentStep, total, replayAt]);
+    const next = Math.min(total - 1, currentStep + 1)
+    replayAt(next)
+  }, [currentStep, total, replayAt])
 
   const goToEnd = useCallback(() => {
-    if (total === 0) return;
-    replayAt(total - 1);
-  }, [total, replayAt]);
+    if (total === 0) return
+    replayAt(total - 1)
+  }, [total, replayAt])
 
   const togglePlay = useCallback(() => {
     if (isPlaying) {
-      setIsPlaying(false);
-      if (playInterval.current) clearInterval(playInterval.current);
+      setIsPlaying(false)
+      if (playInterval.current) clearInterval(playInterval.current)
     } else {
-      setIsPlaying(true);
+      setIsPlaying(true)
     }
-  }, [isPlaying]);
+  }, [isPlaying])
 
   useEffect(() => {
-    if (!isPlaying) return;
+    if (!isPlaying) return
     playInterval.current = setInterval(() => {
       setCurrentStep((prev) => {
-        const next = prev + 1;
+        const next = prev + 1
         if (next >= total) {
-          setIsPlaying(false);
-          return prev;
+          setIsPlaying(false)
+          return prev
         }
-        replayAt(next);
-        return next;
-      });
-    }, 800);
+        replayAt(next)
+        return next
+      })
+    }, 800)
 
     return () => {
-      if (playInterval.current) clearInterval(playInterval.current);
-    };
-  }, [isPlaying, total, replayAt]);
+      if (playInterval.current) clearInterval(playInterval.current)
+    }
+  }, [isPlaying, total, replayAt])
 
   const handleSlider = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      const step = Number(e.target.value);
+      const step = Number(e.target.value)
       if (step === -1) {
-        goToStart();
+        goToStart()
       } else {
-        replayAt(step);
+        replayAt(step)
       }
     },
     [goToStart, replayAt]
-  );
+  )
 
-  if (total === 0) return null;
+  if (total === 0) return null
 
   return (
     <div className="boredgame-devtools-timetravel">
       <button
-        className={`boredgame-devtools-timetravel-btn${isReplayMode ? " active" : ""}`}
-        onClick={() => onReplayModeChange(!isReplayMode)}
+        className={`boredgame-devtools-timetravel-btn${isReplayMode ? ' active' : ''}`}
+        onClick={() => {
+          onReplayModeChange(!isReplayMode)
+        }}
         title="Toggle time-travel mode"
       >
-        {isReplayMode ? "LIVE" : "RPL"}
+        {isReplayMode ? 'LIVE' : 'RPL'}
       </button>
 
       <button
@@ -153,9 +159,9 @@ export const TimeTravelControls = <TAction,>({
         className="boredgame-devtools-timetravel-btn"
         onClick={togglePlay}
         disabled={!isReplayMode}
-        title={isPlaying ? "Pause" : "Play"}
+        title={isPlaying ? 'Pause' : 'Play'}
       >
-        {isPlaying ? "⏸" : "▶"}
+        {isPlaying ? '⏸' : '▶'}
       </button>
 
       <button
@@ -187,8 +193,10 @@ export const TimeTravelControls = <TAction,>({
       />
 
       <span className="boredgame-devtools-timetravel-label">
-        {isReplayMode ? `${currentStep + 1} / ${total}` : `${total}`}
+        {isReplayMode
+          ? `${String(currentStep + 1)} / ${String(total)}`
+          : String(total)}
       </span>
     </div>
-  );
-};
+  )
+}

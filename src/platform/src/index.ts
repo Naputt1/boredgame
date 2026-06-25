@@ -1,1 +1,1 @@
-export { PlatformProvider, usePlatform } from "./auto";
+export { PlatformProvider, usePlatform } from './auto'

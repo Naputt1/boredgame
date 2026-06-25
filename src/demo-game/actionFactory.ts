@@ -1,19 +1,21 @@
-import { GAME_ACTION_VERSION } from "./actions";
+import { GAME_ACTION_VERSION } from './actions'
 import type {
   PlayerJoinedAction,
   TokenMovedAction,
   GameResetAction,
-  DemoGameAction
-} from "./actions";
+  DemoGameAction,
+} from './actions'
 
 const makeActionId = (playerId: string): string =>
-  globalThis.crypto?.randomUUID?.() ?? `${playerId}-${Date.now()}-${Math.random()}`;
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+  globalThis.crypto?.randomUUID?.() ??
+  `${playerId}-${String(Date.now())}-${String(Math.random())}`
 
-export const createActionMeta = (playerId: string): DemoGameAction["meta"] => ({
+export const createActionMeta = (playerId: string): DemoGameAction['meta'] => ({
   playerId,
   timestamp: Date.now(),
-  actionId: makeActionId(playerId)
-});
+  actionId: makeActionId(playerId),
+})
 
 export const createPlayerJoinedAction = (
   playerId: string,
@@ -22,26 +24,26 @@ export const createPlayerJoinedAction = (
   tokenId: string,
   startPosition: { x: number; y: number }
 ): PlayerJoinedAction => ({
-  type: "player.joined",
+  type: 'player.joined',
   version: GAME_ACTION_VERSION,
   payload: { playerId, name, color, tokenId, startPosition },
-  meta: createActionMeta(playerId)
-});
+  meta: createActionMeta(playerId),
+})
 
 export const createTokenMovedAction = (
   playerId: string,
   tokenId: string,
   to: { x: number; y: number }
 ): TokenMovedAction => ({
-  type: "token.moved",
+  type: 'token.moved',
   version: GAME_ACTION_VERSION,
   payload: { tokenId, to },
-  meta: createActionMeta(playerId)
-});
+  meta: createActionMeta(playerId),
+})
 
 export const createGameResetAction = (playerId: string): GameResetAction => ({
-  type: "game.reset",
+  type: 'game.reset',
   version: GAME_ACTION_VERSION,
   payload: {},
-  meta: createActionMeta(playerId)
-});
+  meta: createActionMeta(playerId),
+})

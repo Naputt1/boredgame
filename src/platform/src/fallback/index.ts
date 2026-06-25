@@ -1,1 +1,1 @@
-export { PlatformProvider, usePlatform } from "./FallbackProvider";
+export { PlatformProvider, usePlatform } from './FallbackProvider'
