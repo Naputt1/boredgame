@@ -21,10 +21,11 @@ export const PlatformProvider = ({ children, gameDefinition, middleware }: Platf
     () =>
       createTransport({
         playerId: ctx.userId,
+        gameId: gameDefinition.id,
         url: import.meta.env.VITE_WS_URL as string | undefined,
         instanceId: ctx.instanceId,
       }),
-    [ctx.userId, ctx.instanceId]
+    [ctx.userId, ctx.instanceId, gameDefinition.id]
   );
 
   return (

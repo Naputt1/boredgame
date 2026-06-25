@@ -88,7 +88,7 @@ export const PlatformProvider = ({ children, gameDefinition, middleware }: Platf
   const transport = useMemo(
     () =>
       ctx
-        ? createTransport({ playerId: ctx.userId, instanceId: ctx.instanceId, gameId: gameDefinition.id })
+        ? createTransport({ playerId: ctx.userId, gameId: gameDefinition.id, instanceId: ctx.instanceId })
         : null,
     [ctx, gameDefinition.id]
   );

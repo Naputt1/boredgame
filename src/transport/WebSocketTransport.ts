@@ -1,8 +1,9 @@
-import { GameTransport, Unsubscribe, ConnectionState } from "./GameTransport";
+import { GameTransport, Unsubscribe, ConnectionState, RoomStateData } from "./GameTransport";
 import {
   type ClientMessage,
   type Envelope,
   type ServerMessage,
+  type SyncMode,
   WSPROTO_VERSION,
   WSPROTO_MIN_VERSION,
   WSPROTO_MAX_VERSION
@@ -20,7 +21,7 @@ export type WebSocketTransportOptions = {
 export class WebSocketTransport implements GameTransport {
   private ws: WebSocket | null = null;
   private roomId: string | null = null;
-  private syncMode: "action" | "state" = "state";
+  private syncMode: SyncMode = "state";
   private knownActionIds: string[] = [];
   private negotiatedVersion = WSPROTO_VERSION;
 
@@ -32,6 +33,9 @@ export class WebSocketTransport implements GameTransport {
   private peerJoinedListeners = new Set<(playerId: string) => void>();
   private errorListeners = new Set<(payload: { code: string; message: string }) => void>();
   private connectionStateListeners = new Set<(state: ConnectionState) => void>();
+  private roomUpdateListeners = new Set<(roomState: RoomStateData) => void>();
+  private hostChangedListeners = new Set<(newHostId: string) => void>();
+  private roomClosedListeners = new Set<(reason: string) => void>();
 
   private reconnectAttempts = 0;
   private maxReconnectAttempts: number;
@@ -45,6 +49,7 @@ export class WebSocketTransport implements GameTransport {
   private url: string;
   private playerId: string;
   private gameId: string;
+  private roomCode: string | undefined;
 
   constructor(options: WebSocketTransportOptions) {
     this.url = options.url;
@@ -55,14 +60,51 @@ export class WebSocketTransport implements GameTransport {
     this.fullSnapshotThreshold = options.fullSnapshotThreshold ?? 50;
   }
 
-  async connect(roomId: string): Promise<void> {
+  async connect(roomId: string, roomCode?: string): Promise<void> {
+    if (this.ws && (this.ws.readyState === WebSocket.OPEN || this.ws.readyState === WebSocket.CONNECTING)) {
+      return;
+    }
     this.roomId = roomId;
+    if (roomCode !== undefined) {
+      this.roomCode = roomCode;
+    }
     this.disconnectedIntentionally = false;
     this.reconnectAttempts = 0;
     this.knownActionIds = [];
     this.emitConnectionState("connecting");
 
     await this.openConnection();
+  }
+
+  async createRoom(options: {
+    isPrivate?: boolean;
+    discordInstanceId?: string;
+    maxPlayers?: number;
+    allowSpectators?: boolean;
+    maxSpectators?: number;
+  }): Promise<void> {
+    this.disconnectedIntentionally = false;
+    this.reconnectAttempts = 0;
+    this.knownActionIds = [];
+    this.emitConnectionState("connecting");
+
+    await this.openConnection(options);
+  }
+
+  leaveRoom(): void {
+    this.send({ type: "leave-room", payload: { playerId: this.playerId } });
+  }
+
+  startGame(): void {
+    this.send({ type: "start-game", payload: {} });
+  }
+
+  setSpectate(spectating: boolean): void {
+    this.send({ type: "spectate", payload: { playerId: this.playerId, spectating } });
+  }
+
+  setReady(ready: boolean): void {
+    this.send({ type: "set-ready", payload: { playerId: this.playerId, ready } });
   }
 
   sendAction(action: unknown): void {
@@ -103,6 +145,21 @@ export class WebSocketTransport implements GameTransport {
     return () => this.connectionStateListeners.delete(callback);
   }
 
+  onRoomUpdate(callback: (roomState: RoomStateData) => void): Unsubscribe {
+    this.roomUpdateListeners.add(callback);
+    return () => this.roomUpdateListeners.delete(callback);
+  }
+
+  onHostChanged(callback: (newHostId: string) => void): Unsubscribe {
+    this.hostChangedListeners.add(callback);
+    return () => this.hostChangedListeners.delete(callback);
+  }
+
+  onRoomClosed(callback: (reason: string) => void): Unsubscribe {
+    this.roomClosedListeners.add(callback);
+    return () => this.roomClosedListeners.delete(callback);
+  }
+
   disconnect(): void {
     this.disconnectedIntentionally = true;
     this.clearReconnectTimer();
@@ -119,7 +176,13 @@ export class WebSocketTransport implements GameTransport {
     this.connectionStateListeners.forEach((l) => l(state));
   }
 
-  private async openConnection(): Promise<void> {
+  private async openConnection(createRoomOptions?: {
+    isPrivate?: boolean;
+    discordInstanceId?: string;
+    maxPlayers?: number;
+    allowSpectators?: boolean;
+    maxSpectators?: number;
+  }): Promise<void> {
     const wsUrl = new URL(this.url);
     wsUrl.searchParams.set("roomId", this.roomId ?? "");
     wsUrl.searchParams.set("playerId", this.playerId);
@@ -143,7 +206,11 @@ export class WebSocketTransport implements GameTransport {
         this.ws?.removeEventListener("open", onOpen);
         this.ws?.removeEventListener("error", onError);
 
-        this.joinRoom();
+        if (createRoomOptions) {
+          this.sendCreateRoom(createRoomOptions);
+        } else {
+          this.joinRoom();
+        }
       };
 
       const onMessage = (event: MessageEvent) => {
@@ -203,7 +270,30 @@ export class WebSocketTransport implements GameTransport {
         playerId: this.playerId,
         syncMode: this.syncMode,
         knownActionIds: this.knownActionIds,
-        version: { min: WSPROTO_MIN_VERSION, max: WSPROTO_MAX_VERSION }
+        version: { min: WSPROTO_MIN_VERSION, max: WSPROTO_MAX_VERSION },
+        roomCode: this.roomCode
+      }
+    });
+  }
+
+  private sendCreateRoom(options: {
+    isPrivate?: boolean;
+    discordInstanceId?: string;
+    maxPlayers?: number;
+    allowSpectators?: boolean;
+    maxSpectators?: number;
+  }): void {
+    this.send({
+      type: "create-room",
+      payload: {
+        gameId: this.gameId,
+        playerId: this.playerId,
+        syncMode: this.syncMode,
+        isPrivate: options.isPrivate,
+        discordInstanceId: options.discordInstanceId,
+        maxPlayers: options.maxPlayers,
+        allowSpectators: options.allowSpectators,
+        maxSpectators: options.maxSpectators
       }
     });
   }
@@ -259,6 +349,33 @@ export class WebSocketTransport implements GameTransport {
 
       case "error": {
         this.errorListeners.forEach((listener) => listener(msg.payload));
+        break;
+      }
+
+      case "room-state": {
+        this.roomUpdateListeners.forEach((listener) => listener(msg.payload));
+        break;
+      }
+
+      case "host-changed": {
+        this.hostChangedListeners.forEach((listener) => listener(msg.payload.newHostId));
+        break;
+      }
+
+      case "player-kicked": {
+        this.errorListeners.forEach((listener) =>
+          listener({ code: "KICKED", message: msg.payload.reason })
+        );
+        break;
+      }
+
+      case "room-closed": {
+        this.roomClosedListeners.forEach((listener) => listener(msg.payload.reason));
+        break;
+      }
+
+      case "pong": {
+        // heartbeat received — nothing to do, connection is alive
         break;
       }
 

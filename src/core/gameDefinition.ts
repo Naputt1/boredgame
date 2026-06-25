@@ -40,6 +40,27 @@ export type GameAssets = {
   images?: string[];
 };
 
+export type RoomLifecycleState =
+  | "lobby"
+  | "starting"
+  | "in_game"
+  | "paused"
+  | "ended"
+  | "archived";
+
+export type PlayerSlot = {
+  playerId: string;
+  joinedAt: number;
+  isSpectator: boolean;
+  isReady: boolean;
+};
+
+export type RoomConfig = {
+  maxPlayers: number;
+  maxSpectators: number;
+  allowSpectators: boolean;
+};
+
 export type ServerValidationResult =
   | { valid: true }
   | { valid: false; code: string; message: string };

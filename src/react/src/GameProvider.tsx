@@ -1,16 +1,17 @@
 import {
   createContext,
   ReactNode,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
   useRef,
   useState
 } from "react";
-import type { GameDefinition, GameEngineMiddleware, SyncMode } from "@boredgame/core";
+import type { GameDefinition, GameEngineMiddleware, SyncMode, RoomLifecycleState, PlayerSlot } from "@boredgame/core";
 import { createGameEngine } from "@boredgame/engine";
 import type { GameEngine } from "@boredgame/engine";
-import type { GameTransport, ConnectionState } from "@boredgame/transport";
+import type { GameTransport, ConnectionState, RoomStateData } from "@boredgame/transport";
 
 export type GameParticipant = {
   id: string;
@@ -43,6 +44,15 @@ type GameContextValue = {
   playerId: string;
   roomId: string;
   participants: GameParticipant[];
+  roomStatus: RoomLifecycleState | null;
+  roomHostId: string | null;
+  roomPlayers: PlayerSlot[];
+  isSpectator: boolean;
+  privateCode: string | undefined;
+  startGame: () => void;
+  leaveRoom: () => void;
+  setReady: (ready: boolean) => void;
+  setSpectate: (spectating: boolean) => void;
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -78,6 +88,10 @@ export const GameProvider = <TState, TAction>({
     state: "connecting",
     lastError: null
   });
+  const [roomStatus, setRoomStatus] = useState<RoomLifecycleState | null>(null);
+  const [roomHostId, setRoomHostId] = useState<string | null>(null);
+  const [roomPlayers, setRoomPlayers] = useState<PlayerSlot[]>([]);
+  const [privateCode, setPrivateCode] = useState<string | undefined>(undefined);
 
   const engine = useMemo<GameEngine<TState, TAction>>(
     () => createGameEngine({
@@ -110,6 +124,25 @@ export const GameProvider = <TState, TAction>({
       });
     }
 
+    if (transport.onRoomUpdate) {
+      transport.onRoomUpdate((roomState: RoomStateData) => {
+        if (!cancelled) {
+          setRoomStatus(roomState.status as RoomLifecycleState);
+          setRoomHostId(roomState.hostId);
+          setRoomPlayers(roomState.players);
+          setPrivateCode(roomState.privateCode);
+        }
+      });
+    }
+
+    if (transport.onHostChanged) {
+      transport.onHostChanged((newHostId: string) => {
+        if (!cancelled) {
+          setRoomHostId(newHostId);
+        }
+      });
+    }
+
     engine
       .connect(roomId)
       .then(() => {
@@ -135,12 +168,33 @@ export const GameProvider = <TState, TAction>({
     return () => {
       cancelled = true;
       setConnectionStatus({ state: "disconnected", lastError: null });
+      setRoomStatus(null);
+      setRoomHostId(null);
+      setRoomPlayers([]);
+      setPrivateCode(undefined);
       unsubscribe();
       void engine.disconnect();
     };
   }, [engine, roomId, transport]);
 
   const connected = connectionStatus.state === "connected";
+  const isSpectator = roomPlayers.some(p => p.playerId === playerId && p.isSpectator);
+
+  const startGame = useCallback(() => {
+    if (transport.startGame) transport.startGame();
+  }, [transport]);
+
+  const leaveRoom = useCallback(() => {
+    if (transport.leaveRoom) transport.leaveRoom();
+  }, [transport]);
+
+  const setReady = useCallback((ready: boolean) => {
+    if (transport.setReady) transport.setReady(ready);
+  }, [transport]);
+
+  const setSpectateCallback = useCallback((spectating: boolean) => {
+    if (transport.setSpectate) transport.setSpectate(spectating);
+  }, [transport]);
 
   const value = useMemo<GameContextValue>(
     () => ({
@@ -150,9 +204,20 @@ export const GameProvider = <TState, TAction>({
       connectionStatus,
       playerId,
       roomId,
-      participants
+      participants,
+      roomStatus,
+      roomHostId,
+      roomPlayers,
+      isSpectator,
+      privateCode,
+      startGame,
+      leaveRoom,
+      setReady,
+      setSpectate: setSpectateCallback
     }),
-    [connected, connectionStatus, engine.sendAction, playerId, roomId, state, participants]
+    [connected, connectionStatus, engine.sendAction, playerId, roomId, state, participants,
+     roomStatus, roomHostId, roomPlayers, isSpectator, privateCode,
+     startGame, leaveRoom, setReady, setSpectateCallback]
   );
 
   return (
@@ -175,6 +240,15 @@ export const useGame = <TState = unknown, TAction = unknown>(): {
   playerId: string;
   roomId: string;
   participants: GameParticipant[];
+  roomStatus: RoomLifecycleState | null;
+  roomHostId: string | null;
+  roomPlayers: PlayerSlot[];
+  isSpectator: boolean;
+  privateCode: string | undefined;
+  startGame: () => void;
+  leaveRoom: () => void;
+  setReady: (ready: boolean) => void;
+  setSpectate: (spectating: boolean) => void;
 } => {
   const value = useContext(GameContext);
 
@@ -190,5 +264,14 @@ export const useGame = <TState = unknown, TAction = unknown>(): {
     playerId: string;
     roomId: string;
     participants: GameParticipant[];
+    roomStatus: RoomLifecycleState | null;
+    roomHostId: string | null;
+    roomPlayers: PlayerSlot[];
+    isSpectator: boolean;
+    privateCode: string | undefined;
+    startGame: () => void;
+    leaveRoom: () => void;
+    setReady: (ready: boolean) => void;
+    setSpectate: (spectating: boolean) => void;
   };
 };

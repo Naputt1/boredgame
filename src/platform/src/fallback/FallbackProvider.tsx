@@ -18,8 +18,8 @@ export const PlatformProvider = ({ children, gameDefinition, middleware }: Platf
   const ctx = useFallbackContext();
 
   const transport = useMemo(
-    () => createTransport({ playerId: ctx.userId }),
-    [ctx.userId]
+    () => createTransport({ playerId: ctx.userId, gameId: gameDefinition.id }),
+    [ctx.userId, gameDefinition.id]
   );
 
   return (

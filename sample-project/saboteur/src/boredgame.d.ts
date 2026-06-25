@@ -3,6 +3,7 @@ declare module "boredgame:transport" {
 
   export function createTransport(opts: {
     playerId: string;
+    gameId: string;
     url?: string;
     instanceId?: string;
   }): GameTransport;

@@ -1,7 +1,6 @@
-import { useGame } from "@boredgame/react";
+import { useGame, LobbyView } from "@boredgame/react";
 import { ConnectionBanner } from "./ConnectionBanner";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type GameScreenProps = {
   definition: any;
   onBack: () => void;
@@ -15,8 +14,19 @@ export const GameScreen = ({ definition, onBack }: GameScreenProps) => {
     connectionStatus,
     playerId,
     roomId,
-    participants
+    participants,
+    roomStatus
   } = useGame();
+
+  if (roomStatus === "lobby" || roomStatus === "starting") {
+    return (
+      <LobbyView
+        gameName={definition.name}
+        minPlayers={definition.metadata.minPlayers}
+        onBack={onBack}
+      />
+    );
+  }
 
   const Renderer = definition.renderer;
 

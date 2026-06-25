@@ -7,5 +7,8 @@ export type {
   VersionCompat,
   GameMetadata,
   GameAssets,
-  ServerValidationResult
+  ServerValidationResult,
+  RoomLifecycleState,
+  PlayerSlot,
+  RoomConfig
 } from "./gameDefinition";
