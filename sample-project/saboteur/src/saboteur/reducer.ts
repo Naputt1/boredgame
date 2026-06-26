@@ -1,10 +1,11 @@
+import { Deck, Primitive } from '@boredgame/primitives'
 import type { SaboteurAction } from './actions'
 import {
   createInitialState,
   type SaboteurState,
   type Card,
   type PlayerId,
-  type PathCard,
+  PathCard,
   type ActionCard,
   type ActionType,
   type Role,
@@ -30,27 +31,13 @@ const appendId = (s: SaboteurState, id: string): string[] => [
   id,
 ]
 
-const removeCard = <T extends Card>(arr: T[], id: string): T[] => {
-  const idx = arr.findIndex((c) => c.id === id)
-  return idx === -1 ? arr : [...arr.slice(0, idx), ...arr.slice(idx + 1)]
-}
-
-const shuffle = <T>(arr: T[]): T[] => {
+const shuffleRoles = <T>(arr: T[]): T[] => {
   const r = [...arr]
   for (let i = r.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1))
     ;[r[i], r[j]] = [r[j], r[i]]
   }
   return r
-}
-
-const drawCards = (
-  deck: Card[],
-  count: number
-): { drawn: Card[]; remaining: Card[] } => {
-  const d = [...deck]
-  const drawn = d.splice(0, count)
-  return { drawn, remaining: d }
 }
 
 const getRoleCounts = (
@@ -89,6 +76,13 @@ export const saboteurReducer = (
     return state
   }
 
+  if (!(state.deck instanceof Deck)) {
+    state = {
+      ...state,
+      deck: Primitive.fromJSON(state.deck) as Deck<Card>,
+    }
+  }
+
   switch (action.type) {
     case 'join.game': {
       if (state.phase !== 'joining')
@@ -119,27 +113,28 @@ export const saboteurReducer = (
       const playerCount = newOrder.length
 
       if (playerCount >= 3) {
-        // Auto-start game
         const roleCounts = getRoleCounts(playerCount)
         const roleDeck: Role[] = [
           ...Array<Role>(roleCounts.miners).fill('miner'),
           ...Array<Role>(roleCounts.saboteurs).fill('saboteur'),
         ]
-        const shuffledRoles = shuffle(roleDeck)
+        const shuffledRoles = shuffleRoles(roleDeck)
         const roles: Record<PlayerId, Role> = {}
         newOrder.forEach((pid, i) => {
           roles[pid] = shuffledRoles[i]
         })
 
-        const shuffledDeck = shuffle(state.deck)
         const handSize = getHandSize(playerCount)
+        const { drawn, deck: remaining } = state.deck
+          .shuffle()
+          .draw(handSize * playerCount)
         const hands: Record<PlayerId, Card[]> = {}
         let deckPtr = 0
         for (const pid of newOrder) {
           const hand: Card[] = []
           for (let h = 0; h < handSize; h++) {
-            if (deckPtr < shuffledDeck.length) {
-              hand.push({ ...shuffledDeck[deckPtr++] })
+            if (deckPtr < drawn.length) {
+              hand.push(drawn[deckPtr++])
             }
           }
           hands[pid] = hand
@@ -151,7 +146,7 @@ export const saboteurReducer = (
           playerOrder: newOrder,
           roles,
           hands,
-          deck: shuffledDeck.slice(deckPtr),
+          deck: remaining,
           brokenTools: {},
           phase: 'playing',
           currentPlayerIndex: 0,
@@ -184,7 +179,6 @@ export const saboteurReducer = (
         }
       }
 
-      // Check broken tools
       const broken = state.brokenTools[pid]
       // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       if (broken && broken.length > 0) {
@@ -219,12 +213,13 @@ export const saboteurReducer = (
 
       const { col, row, rotation } = action.payload
 
-      // Build the card with the requested rotation
-      const placedCard: PathCard = {
-        ...card,
+      const placedCard = new PathCard({
+        id: card.id,
+        suit: 'path',
+        shape: card.shape,
         rotation,
         connections: rotateConnectionsForAction(card, rotation),
-      }
+      })
 
       if (
         !canPlacePath(
@@ -244,12 +239,11 @@ export const saboteurReducer = (
         }
       }
 
-      const newHand = removeCard(hand, card.id)
+      const newHand = hand.filter((c) => c.id !== card.id)
       const newBoard = replaceOrAddCell(state.board, col, row, {
         card: placedCard,
       })
 
-      // Check if this path reaches any goal card
       const reachedGoal = state.goalCards.find(
         (g) =>
           !g.revealed &&
@@ -267,14 +261,12 @@ export const saboteurReducer = (
       )
 
       if (reachedGoal) {
-        // Reveal the goal
         const newGoals = state.goalCards.map((g) => {
           if (g.id === reachedGoal.id) return { ...g, revealed: true }
           return g
         })
 
         if (reachedGoal.isTreasure) {
-          // Gold! Place the goal card on the board
           const goalCard = getGoalCard(true)
           const boardWithGoal = replaceOrAddCell(
             newBoard,
@@ -283,11 +275,10 @@ export const saboteurReducer = (
             { card: goalCard }
           )
 
-          // Draw card, advance turn
           const drawResult =
-            state.deck.length > 0
-              ? drawCards(state.deck, 1)
-              : { drawn: [], remaining: state.deck }
+            state.deck.size > 0
+              ? state.deck.draw(1)
+              : { drawn: [], deck: state.deck }
           const finalHand =
             drawResult.drawn.length > 0
               ? [...newHand, ...drawResult.drawn]
@@ -304,7 +295,7 @@ export const saboteurReducer = (
             board: boardWithGoal,
             goalCards: newGoals,
             hands: { ...state.hands, [pid]: finalHand },
-            deck: drawResult.remaining,
+            deck: drawResult.deck,
             currentPlayerIndex:
               (state.currentPlayerIndex + 1) % state.playerOrder.length,
             phase: 'round-end',
@@ -319,7 +310,6 @@ export const saboteurReducer = (
             appliedActionIds: appendId(state, action.meta.actionId),
           }
         } else {
-          // Stone — place the goal card on the board
           const goalCard = getGoalCard(false)
           const boardWithGoal = replaceOrAddCell(
             newBoard,
@@ -328,11 +318,10 @@ export const saboteurReducer = (
             { card: goalCard }
           )
 
-          // Draw and advance
           const drawResult =
-            state.deck.length > 0
-              ? drawCards(state.deck, 1)
-              : { drawn: [], remaining: state.deck }
+            state.deck.size > 0
+              ? state.deck.draw(1)
+              : { drawn: [], deck: state.deck }
           const finalHand =
             drawResult.drawn.length > 0
               ? [...newHand, ...drawResult.drawn]
@@ -343,7 +332,7 @@ export const saboteurReducer = (
             board: boardWithGoal,
             goalCards: newGoals,
             hands: { ...state.hands, [pid]: finalHand },
-            deck: drawResult.remaining,
+            deck: drawResult.deck,
             currentPlayerIndex:
               (state.currentPlayerIndex + 1) % state.playerOrder.length,
             lastPathPlayerId: pid,
@@ -352,11 +341,10 @@ export const saboteurReducer = (
         }
       }
 
-      // No goal reached — draw and advance
       const drawResult =
-        state.deck.length > 0
-          ? drawCards(state.deck, 1)
-          : { drawn: [], remaining: state.deck }
+        state.deck.size > 0
+          ? state.deck.draw(1)
+          : { drawn: [], deck: state.deck }
       const finalHand =
         drawResult.drawn.length > 0
           ? [...newHand, ...drawResult.drawn]
@@ -364,13 +352,12 @@ export const saboteurReducer = (
 
       const nextIdx = (state.currentPlayerIndex + 1) % state.playerOrder.length
 
-      // Check if deck is empty AND no one has playable cards
-      const isDeckEmpty = drawResult.remaining.length === 0
+      const isDeckEmpty = drawResult.deck.size === 0
       const updatedAllHands = { ...state.hands, [pid]: finalHand }
       const updatedState = {
         ...state,
         hands: updatedAllHands,
-        deck: drawResult.remaining,
+        deck: drawResult.deck,
       }
       const stuck = isDeckEmpty && noPlayableCards(updatedState)
 
@@ -378,7 +365,7 @@ export const saboteurReducer = (
         ...state,
         board: newBoard,
         hands: updatedAllHands,
-        deck: drawResult.remaining,
+        deck: drawResult.deck,
         currentPlayerIndex: nextIdx,
         lastPathPlayerId: pid,
         phase: stuck ? 'round-end' : state.phase,
@@ -437,12 +424,12 @@ export const saboteurReducer = (
 
       const { targetPlayerId, targetCol, targetRow, repairType } =
         action.payload
-      const newHand = removeCard(hand, card.id)
+      const newHand = hand.filter((c) => c.id !== card.id)
 
       let newBrokenTools = { ...state.brokenTools }
       let newBoard = state.board.map((r) => [...r])
       let newGoals = [...state.goalCards]
-      let newDiscardPile = [...state.discardPile, { ...card }]
+      let newDiscardPile = [...state.discardPile, card]
       let removedBrokenCards: ActionCard[] = []
 
       switch (card.actionType) {
@@ -472,7 +459,7 @@ export const saboteurReducer = (
           }
           newBrokenTools = {
             ...newBrokenTools,
-            [targetPlayerId]: [...existing, { ...card }],
+            [targetPlayerId]: [...existing, card],
           }
           break
         }
@@ -502,8 +489,7 @@ export const saboteurReducer = (
               ...state,
               appliedActionIds: appendId(state, action.meta.actionId),
             }
-          // Add the broken tool card to discard pile too
-          const repairedCard = { ...existingBroken[matchIdx] }
+          const repairedCard = existingBroken[matchIdx]
           newBrokenTools = {
             ...newBrokenTools,
             [targetPlayerId]: existingBroken.filter((_, i) => i !== matchIdx),
@@ -530,7 +516,7 @@ export const saboteurReducer = (
               ...state,
               appliedActionIds: appendId(state, action.meta.actionId),
             }
-          const repairedCard = { ...existingBrk[matchDualIdx] }
+          const repairedCard = existingBrk[matchDualIdx]
           newBrokenTools = {
             ...newBrokenTools,
             [targetPlayerId]: existingBrk.filter((_, i) => i !== matchDualIdx),
@@ -571,10 +557,9 @@ export const saboteurReducer = (
           newBoard = state.board.map((r) => [...r])
           newBoard[targetRow] = [...newBoard[targetRow]]
           newBoard[targetRow][targetCol] = null
-          // Add the removed path card to discard pile
           // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
           if (targetCell.card) {
-            newDiscardPile = [...newDiscardPile, { ...targetCell.card }]
+            newDiscardPile = [...newDiscardPile, targetCell.card]
           }
           break
         }
@@ -594,27 +579,21 @@ export const saboteurReducer = (
               ...state,
               appliedActionIds: appendId(state, action.meta.actionId),
             }
-          // Reveal for this peek, then revert face-down
           newGoals = newGoals.map((g) =>
             g.id === goal.id ? { ...g, revealed: true } : g
           )
-          // Schedule revert: after send, the client shows the reveal briefly
-          // For state-sync, we reveal and it stays revealed for this state version
-          // The player can inspect the state to see the treasure
           break
         }
       }
 
-      // Add removed broken cards to discard pile
       if (removedBrokenCards.length > 0) {
         newDiscardPile = [...newDiscardPile, ...removedBrokenCards]
       }
 
-      // Draw card
       const drawResult =
-        state.deck.length > 0
-          ? drawCards(state.deck, 1)
-          : { drawn: [], remaining: state.deck }
+        state.deck.size > 0
+          ? state.deck.draw(1)
+          : { drawn: [], deck: state.deck }
       const finalHand =
         drawResult.drawn.length > 0
           ? [...newHand, ...drawResult.drawn]
@@ -626,19 +605,18 @@ export const saboteurReducer = (
       const updatedState = {
         ...state,
         hands: updatedAllHands,
-        deck: drawResult.remaining,
+        deck: drawResult.deck,
         brokenTools: newBrokenTools,
         board: newBoard,
         goalCards: newGoals,
         discardPile: newDiscardPile,
       }
-      const stuck =
-        drawResult.remaining.length === 0 && noPlayableCards(updatedState)
+      const stuck = drawResult.deck.size === 0 && noPlayableCards(updatedState)
 
       return {
         ...state,
         hands: updatedAllHands,
-        deck: drawResult.remaining,
+        deck: drawResult.deck,
         brokenTools: newBrokenTools,
         board: newBoard,
         goalCards: newGoals,
@@ -677,14 +655,12 @@ export const saboteurReducer = (
 
       const hand = state.hands[pid]
 
-      // Handle empty-hand pass: if hand is empty, just advance turn (no discard)
       // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       if (!hand || hand.length === 0) {
         const nextIdx =
           (state.currentPlayerIndex + 1) % state.playerOrder.length
         const updatedState = { ...state, currentPlayerIndex: nextIdx }
-        // Check if stuck is needed here too
-        const deckCheck = state.deck.length === 0
+        const deckCheck = state.deck.size === 0
         const stuck = deckCheck && noPlayableCards(updatedState)
         return {
           ...state,
@@ -713,12 +689,12 @@ export const saboteurReducer = (
         }
 
       const discarded = hand[cardIdx]
-      const newHand2 = removeCard(hand, discarded.id)
+      const newHand2 = hand.filter((c) => c.id !== discarded.id)
 
       const drawResult2 =
-        state.deck.length > 0
-          ? drawCards(state.deck, 1)
-          : { drawn: [], remaining: state.deck }
+        state.deck.size > 0
+          ? state.deck.draw(1)
+          : { drawn: [], deck: state.deck }
       const finalHand2 =
         drawResult2.drawn.length > 0
           ? [...newHand2, ...drawResult2.drawn]
@@ -730,15 +706,15 @@ export const saboteurReducer = (
       const updatedState2 = {
         ...state,
         hands: updatedAllHands2,
-        deck: drawResult2.remaining,
+        deck: drawResult2.deck,
       }
       const stuck =
-        drawResult2.remaining.length === 0 && noPlayableCards(updatedState2)
+        drawResult2.deck.size === 0 && noPlayableCards(updatedState2)
 
       return {
         ...state,
         hands: updatedAllHands2,
-        deck: drawResult2.remaining,
+        deck: drawResult2.deck,
         discardPile: [...state.discardPile, discarded],
         currentPlayerIndex: nextIdx2,
         phase: stuck ? 'round-end' : state.phase,
@@ -777,12 +753,10 @@ export const saboteurReducer = (
       const newNuggets = { ...state.goldNuggets }
 
       if (gd.mode === 'miners-win') {
-        // Draw from nugget pool — player picks one value
         const pool = [...gd.nuggetPool]
         const pick = pool.shift() ?? 0
         newNuggets[currentChooser] = (newNuggets[currentChooser] || 0) + pick
       } else {
-        // Saboteur payout
         newNuggets[currentChooser] =
           (newNuggets[currentChooser] || 0) + gd.saboteurPayout
       }
@@ -811,7 +785,6 @@ export const saboteurReducer = (
     }
 
     case 'start.game': {
-      // Start a new round (after round ended, manually start next round)
       if (state.phase !== 'setup')
         return {
           ...state,
@@ -820,14 +793,12 @@ export const saboteurReducer = (
 
       const nextRound = state.round + 1
 
-      // Set starting player to the left of whoever played the last path card
       let startIdx = 0
       if (state.lastPathPlayerId) {
         const lastIdx = state.playerOrder.indexOf(state.lastPathPlayerId)
         startIdx = (lastIdx + 1) % state.playerOrder.length
       }
 
-      // Reset board and deck
       const newBoard: (CellContent | null)[][] = Array.from(
         { length: BOARD_ROWS },
         () => Array.from({ length: BOARD_COLS }, () => null)
@@ -844,32 +815,28 @@ export const saboteurReducer = (
         connections: [false, false, true, false],
       }))
 
-      // Re-deal roles
       const roleCounts = getRoleCounts(state.playerOrder.length)
       const roleDeck: Role[] = [
         ...Array<Role>(roleCounts.miners).fill('miner'),
         ...Array<Role>(roleCounts.saboteurs).fill('saboteur'),
       ]
-      // Leave one role card aside (the leftover dwarf card)
-      const shuffledRoles = shuffle(roleDeck)
+      const shuffledRoles = shuffleRoles(roleDeck)
       const roles: Record<PlayerId, Role> = {}
       state.playerOrder.forEach((pid, i) => {
         roles[pid] = shuffledRoles[i]
       })
 
-      // New deck
-      const deck: Card[] = shuffle(buildDeck())
+      const deck = buildDeck().shuffle()
       const handSize = getHandSize(state.playerOrder.length)
       const hands: Record<PlayerId, Card[]> = {}
-      const { drawn, remaining } = drawCards(
-        deck,
+      const { drawn, deck: remaining } = deck.draw(
         handSize * state.playerOrder.length
       )
       let cardPtr = 0
       for (const pid of state.playerOrder) {
         const h: Card[] = []
         for (let i = 0; i < handSize; i++) {
-          h.push({ ...drawn[cardPtr++] })
+          h.push(drawn[cardPtr++])
         }
         hands[pid] = h
       }
@@ -907,7 +874,6 @@ export const saboteurReducer = (
   }
 }
 
-// Helper to rotate connections for a played card
 const rotateConnectionsForAction = (
   card: PathCard,
   rotation: 0 | 90 | 180 | 270

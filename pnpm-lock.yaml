@@ -53,6 +53,9 @@ importers:
       '@boredgame/platform':
         specifier: workspace:*
         version: link:../../src/platform
+      '@boredgame/primitives':
+        specifier: workspace:*
+        version: link:../../src/primitives
       '@boredgame/react':
         specifier: workspace:*
         version: link:../../src/react
@@ -257,6 +260,12 @@ importers:
       typescript:
         specifier: ^5.7.3
         version: 5.9.3
+
+  src/primitives:
+    dependencies:
+      '@boredgame/utils':
+        specifier: workspace:*
+        version: link:../utils
 
   src/react:
     dependencies:

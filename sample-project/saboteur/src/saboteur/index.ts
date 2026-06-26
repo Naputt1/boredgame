@@ -9,14 +9,13 @@ export type { SaboteurState } from './state'
 export type { SaboteurAction } from './actions'
 export type {
   Card,
-  PathCard,
-  ActionCard,
   Role,
   PathShape,
   ActionType,
   CellContent,
   GoalCardState,
 } from './state'
+export { PathCard, ActionCard } from './state'
 
 export {
   createInitialState,

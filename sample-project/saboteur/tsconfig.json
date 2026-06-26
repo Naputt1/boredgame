@@ -21,7 +21,9 @@
       "@boredgame/react": ["../../src/react"],
       "@boredgame/transport": ["../../src/transport"],
       "@boredgame/platform": ["../../src/platform/src/discord/index.ts"],
-      "@boredgame/registry": ["../../src/registry"]
+      "@boredgame/registry": ["../../src/registry"],
+      "@boredgame/primitives": ["../../src/primitives"],
+      "@boredgame/utils": ["../../src/utils"]
     }
   },
   "include": ["src"]

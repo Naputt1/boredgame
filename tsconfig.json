@@ -23,6 +23,7 @@
       "@boredgame/platform": ["./src/platform/src/index.ts"],
       "@boredgame/react": ["./src/react/src/index.ts"],
       "@boredgame/transport": ["./src/transport/index.ts"],
+      "@boredgame/primitives": ["./src/primitives/index.ts"],
       "@boredgame/utils": ["./src/utils/index.ts"],
       "@boredgame/vite-plugin": ["./src/vite-plugin/src/index.ts"],
       "@boredgame/registry": ["./src/registry/index.ts"],

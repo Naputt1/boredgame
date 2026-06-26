@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@boredgame/core": "workspace:*",
+    "@boredgame/primitives": "workspace:*",
     "@boredgame/devtools": "workspace:*",
     "@boredgame/engine": "workspace:*",
     "@boredgame/platform": "workspace:*",

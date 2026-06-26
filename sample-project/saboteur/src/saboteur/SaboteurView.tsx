@@ -898,7 +898,7 @@ export const SaboteurView = ({
 
       {/* Deck info */}
       <div style={{ fontSize: 11, color: '#6b7280' }}>
-        Deck: {state.deck.length} cards
+        Deck: {state.deck.size} cards
       </div>
 
       {/* Hand */}

@@ -1,3 +1,5 @@
+import { Primitive, registerClass, Deck } from '@boredgame/primitives'
+
 export type CardId = string
 export type PlayerId = string
 export type Role = 'miner' | 'saboteur'
@@ -11,12 +13,18 @@ export type PathShape =
   | 'goal-gold'
   | 'goal-stone'
 
-export type PathCard = {
-  id: CardId
+export class PathCard extends Primitive<{
+  id: string
   suit: 'path'
   shape: PathShape
   connections: [boolean, boolean, boolean, boolean]
   rotation: 0 | 90 | 180 | 270
+}> {
+  static _type = 'saboteur:path-card'
+  suit!: 'path'
+  shape!: PathShape
+  connections!: [boolean, boolean, boolean, boolean]
+  rotation!: 0 | 90 | 180 | 270
 }
 
 export type ActionType =
@@ -30,10 +38,14 @@ export type ActionType =
   | 'rockfall'
   | 'map'
 
-export type ActionCard = {
-  id: CardId
+export class ActionCard extends Primitive<{
+  id: string
   suit: 'action'
   actionType: ActionType
+}> {
+  static _type = 'saboteur:action-card'
+  suit!: 'action'
+  actionType!: ActionType
 }
 
 export type Card = PathCard | ActionCard
@@ -68,7 +80,7 @@ export type SaboteurState = {
   roles: Record<PlayerId, Role>
   goldNuggets: Record<PlayerId, number>
 
-  deck: Card[]
+  deck: Deck<Card>
   discardPile: Card[]
   hands: Record<PlayerId, Card[]>
 
@@ -84,14 +96,11 @@ export type SaboteurState = {
 
   lastPathPlayerId: PlayerId | null
 
-  // Gold distribution state for round-end phase
   goldDist: {
     mode: 'miners-win' | 'saboteurs-win'
     chooserChain: PlayerId[]
     currentChooserIdx: number
-    // For miner wins: shuffled nugget values drawn from the pool
     nuggetPool: number[]
-    // For saboteur wins: fixed payout per saboteur
     saboteurPayout: number
   } | null
 
@@ -104,6 +113,16 @@ export const START_COL = 2
 export const START_ROW = 8
 export const GOAL_ROWS = [0, 0, 0]
 export const GOAL_COLS = [0, 2, 4]
+
+registerClass(
+  'saboteur:path-card',
+  PathCard as unknown as new (data: unknown) => Primitive
+)
+registerClass(
+  'saboteur:action-card',
+  ActionCard as unknown as new (data: unknown) => Primitive
+)
+registerClass('deck', Deck as unknown as new (data: unknown) => Primitive)
 
 const N = 0,
   E = 1,
@@ -125,19 +144,17 @@ const makePathCard = (
   shape: PathShape,
   baseConns: [boolean, boolean, boolean, boolean],
   rotation: 0 | 90 | 180 | 270
-): PathCard => ({
-  id,
-  suit: 'path',
-  shape,
-  connections: rotateConns(baseConns, rotation),
-  rotation,
-})
+): PathCard =>
+  new PathCard({
+    id,
+    suit: 'path',
+    shape,
+    connections: rotateConns(baseConns, rotation),
+    rotation,
+  })
 
-const makeActionCard = (id: CardId, actionType: ActionType): ActionCard => ({
-  id,
-  suit: 'action',
-  actionType,
-})
+const makeActionCard = (id: CardId, actionType: ActionType): ActionCard =>
+  new ActionCard({ id, suit: 'action', actionType })
 
 const cardId = (() => {
   let i = 0
@@ -164,10 +181,9 @@ const createEmptyGrid = (
 ): (CellContent | null)[][] =>
   Array.from({ length: rows }, () => Array.from({ length: cols }, () => null))
 
-export const buildDeck = (): Card[] => {
-  const cards: Card[] = []
+export const buildDeck = (): Deck<Card> => {
+  const items: Card[] = []
 
-  // Path card specs: [shape, baseConns, rotations, count]
   const pathSpecs: Array<{
     shape: PathShape
     base: [boolean, boolean, boolean, boolean]
@@ -210,12 +226,11 @@ export const buildDeck = (): Card[] => {
   for (const spec of pathSpecs) {
     for (let i = 0; i < spec.count; i++) {
       for (const rot of spec.rots) {
-        cards.push(makePathCard(cardId(), spec.shape, spec.base, rot))
+        items.push(makePathCard(cardId(), spec.shape, spec.base, rot))
       }
     }
   }
 
-  // Action cards
   const actionSpecs: Array<{ type: ActionType; count: number }> = [
     { type: 'break-pickaxe', count: 3 },
     { type: 'break-lantern', count: 3 },
@@ -230,11 +245,11 @@ export const buildDeck = (): Card[] => {
 
   for (const spec of actionSpecs) {
     for (let i = 0; i < spec.count; i++) {
-      cards.push(makeActionCard(cardId(), spec.type))
+      items.push(makeActionCard(cardId(), spec.type))
     }
   }
 
-  return cards
+  return new Deck<Card>({ items, id: 'deck' })
 }
 
 export const createInitialState = (): SaboteurState => {
@@ -319,7 +334,6 @@ export const getAdjacentPositions = (
     .filter((p) => p.col >= 0 && p.col < w && p.row >= 0 && p.row < h)
 }
 
-// Check if a path card can be placed at the given position
 export const canPlacePath = (
   board: (CellContent | null)[][],
   col: number,
@@ -351,11 +365,9 @@ export const canPlacePath = (
     }
   }
 
-  // Must be adjacent to at least one path card with matching connection
   return hasConnection
 }
 
-// Check if there's an uninterrupted path from start to a specific goal
 export const hasPathToGoal = (
   board: (CellContent | null)[][],
   goalCol: number,
@@ -381,7 +393,6 @@ export const hasPathToGoal = (
     if (visited.has(key)) continue
     visited.add(key)
 
-    // Check if we reached the goal
     const goal = goalCards.find((g) => g.col === pos.col && g.row === pos.row)
     if (goal && goal.col === goalCol && goal.row === goalRow) return true
 
@@ -389,7 +400,6 @@ export const hasPathToGoal = (
     if (!cell) continue
     const card = cell.card
 
-    // If we reached a goal cell (it's in the board), check connection
     if (card.shape === 'goal-gold' || card.shape === 'goal-stone') {
       if (goalCol === pos.col && goalRow === pos.row) return true
     }
@@ -409,7 +419,6 @@ export const hasPathToGoal = (
   return false
 }
 
-// Get open cells adjacent to existing path cards where new cards can be placed
 export const getOpenAdjacents = (
   board: (CellContent | null)[][],
   w: number,
@@ -442,7 +451,6 @@ export const getOpenAdjacents = (
     }
   }
 
-  // Also add cells adjacent to unrevealed goal cards
   for (const goal of goalCards) {
     if (goal.revealed) continue
     const adj = getAdjacentPositions(goal.col, goal.row, w, h)
@@ -461,7 +469,6 @@ export const getOpenAdjacents = (
   return open
 }
 
-// Check if any player can play any card (used for round-end detection)
 export const noPlayableCards = (state: SaboteurState): boolean => {
   for (const pid of state.playerOrder) {
     const hand = state.hands[pid]
@@ -478,8 +485,6 @@ export const noPlayableCards = (state: SaboteurState): boolean => {
   return true
 }
 
-// Build a shuffled gold nugget card pool
-// Real distribution: 8×1, 8×2, 8×3, 4×4 = 28 cards
 export const buildNuggetPool = (): number[] => {
   const pool: number[] = []
   for (const [value, count] of [
@@ -490,7 +495,6 @@ export const buildNuggetPool = (): number[] => {
   ] as const) {
     for (let i = 0; i < count; i++) pool.push(value)
   }
-  // Fisher-Yates shuffle
   for (let i = pool.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1))
     ;[pool[i], pool[j]] = [pool[j], pool[i]]
