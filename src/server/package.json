@@ -14,6 +14,7 @@
     "@boredgame/registry": "workspace:*",
     "@boredgame/tic-tac-toe": "workspace:*",
     "saboteur-project": "workspace:*",
+    "uno-project": "workspace:*",
     "ws": "^8.18.1"
   },
   "devDependencies": {

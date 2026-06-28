@@ -9,6 +9,7 @@ export default defineConfig({
       '@boredgame/devtools': resolve(__dirname, 'src/devtools/index.ts'),
       '@boredgame/engine': resolve(__dirname, 'src/engine/index.ts'),
       '@boredgame/transport': resolve(__dirname, 'src/transport/index.ts'),
+      '@boredgame/pixi-renderer': resolve(__dirname, 'src/pixi-renderer/index.ts'),
       '@boredgame/utils': resolve(__dirname, 'src/utils/index.ts'),
     },
   },

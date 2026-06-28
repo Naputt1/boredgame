@@ -1,0 +1,31 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "useDefineForClassFields": true,
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "allowJs": false,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "paths": {
+      "@boredgame/core": ["../../src/core"],
+      "@boredgame/engine": ["../../src/engine"],
+      "@boredgame/react": ["../../src/react"],
+      "@boredgame/transport": ["../../src/transport"],
+      "@boredgame/platform": ["../../src/platform/src/discord/index.ts"],
+      "@boredgame/registry": ["../../src/registry"],
+      "@boredgame/primitives": ["../../src/primitives"],
+      "@boredgame/pixi-renderer": ["../../src/pixi-renderer"],
+      "@boredgame/utils": ["../../src/utils"]
+    }
+  },
+  "include": ["src"]
+}

@@ -187,7 +187,9 @@ export class WebSocketTransport implements GameTransport {
     this.clearReconnectTimer()
     this.pendingConnectReject?.(new Error('Connection cancelled'))
     this.pendingConnectReject = null
-    this.ws?.close()
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      this.ws.close(1000, 'Client disconnect')
+    }
     this.ws = null
     this.emitConnectionState('disconnected')
   }

@@ -10,6 +10,7 @@ import { GameRegistry } from '@boredgame/registry'
 import { demoGameDefinition } from '@boredgame/demo-game'
 import { ticTacToeDefinition } from '@boredgame/tic-tac-toe'
 import { saboteurDefinition } from 'saboteur-project/definition'
+import { unoDefinition } from 'uno-project/definition'
 import { Room } from './Room'
 
 const gameRegistry = new GameRegistry()
@@ -17,6 +18,7 @@ gameRegistry.registerAll([
   demoGameDefinition,
   ticTacToeDefinition,
   saboteurDefinition,
+  unoDefinition,
 ])
 
 const PORT = Number(process.env.PORT ?? 3001)

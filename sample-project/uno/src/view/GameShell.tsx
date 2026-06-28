@@ -1,12 +1,9 @@
 import { useCallback, useState } from 'react'
+import type { GameDefinition } from '@boredgame/core'
 import { GameRegistry } from '@boredgame/registry'
 import { GameSelector, GameProvider } from '@boredgame/react'
 import { PlatformProvider } from '@boredgame/platform'
-import { demoGameDefinition } from '@boredgame/demo-game'
-import { ticTacToeDefinition } from '@boredgame/tic-tac-toe'
-import { saboteurDefinition } from 'saboteur-project/definition'
-import { unoDefinition } from 'uno-project/definition'
-import type { GameDefinition } from '@boredgame/core'
+import { unoDefinition } from '../uno'
 import type { GameTransport } from '@boredgame/transport'
 import { GameScreen } from './GameScreen'
 import { RoomSetup } from './RoomSetup'
@@ -24,18 +21,13 @@ type Phase =
     }
 
 const registry = new GameRegistry()
-registry.registerAll([
-  demoGameDefinition,
-  ticTacToeDefinition,
-  saboteurDefinition,
-  unoDefinition,
-])
+registry.registerAll([unoDefinition])
 
 const isDiscord =
   typeof window !== 'undefined' &&
   Boolean(
-    ((import.meta as { env?: Record<string, string | undefined> }).env
-      ?.VITE_DISCORD_CLIENT_ID &&
+    ((import.meta as { env: Record<string, string | undefined> }).env
+      .VITE_DISCORD_CLIENT_ID &&
       new URLSearchParams(window.location.search).get('frame_id')) ||
     new URLSearchParams(window.location.search).get('instance_id')
   )

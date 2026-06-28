@@ -1,5 +1,5 @@
 {
-  "name": "simple-project",
+  "name": "uno-project",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -8,17 +8,18 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview --host 127.0.0.1"
   },
+  "exports": {
+    "./definition": "./src/definition.ts"
+  },
   "dependencies": {
     "@boredgame/core": "workspace:*",
-    "@boredgame/demo-game": "workspace:*",
+    "@boredgame/primitives": "workspace:*",
+    "@boredgame/pixi-renderer": "workspace:*",
     "@boredgame/devtools": "workspace:*",
     "@boredgame/engine": "workspace:*",
     "@boredgame/platform": "workspace:*",
     "@boredgame/react": "workspace:*",
     "@boredgame/registry": "workspace:*",
-    "saboteur-project": "workspace:*",
-    "uno-project": "workspace:*",
-    "@boredgame/tic-tac-toe": "workspace:*",
     "@boredgame/transport": "workspace:*",
     "@boredgame/vite-plugin": "workspace:*",
     "@discord/embedded-app-sdk": "^2.5.0",

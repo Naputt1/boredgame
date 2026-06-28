@@ -4,7 +4,7 @@ export abstract class Collection<T extends Primitive> extends Primitive<{
   items: T[]
   id: string
 }> {
-  items: T[] = []
+  declare items: T[]
 
   get size(): number {
     return this.items.length

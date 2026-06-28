@@ -6,6 +6,7 @@
   "scripts": {
     "dev:sample": "pnpm --filter simple-project dev",
     "dev:saboteur": "pnpm --filter saboteur-project dev",
+    "dev:uno": "pnpm --filter uno-project dev",
     "build": "turbo run build",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
