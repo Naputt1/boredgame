@@ -346,28 +346,6 @@ export const UnoView = ({
     }
   }, [state])
 
-  const handleCardClick = useCallback(
-    (card: UnoCard) => {
-      if (!isMyTurn) return
-      if (card.unoValue === 'wild' || card.unoValue === 'wild-draw-four') {
-        setPendingCardId(card.id)
-        setShowColorPicker(true)
-        return
-      }
-      sendAction({
-        type: 'play.card',
-        version: 1,
-        payload: { cardId: card.id },
-        meta: {
-          playerId,
-          timestamp: Date.now(),
-          actionId: `play:${playerId}:${card.id}:${String(Date.now())}`,
-        },
-      })
-    },
-    [isMyTurn, playerId, sendAction]
-  )
-
   const drawUnoCard: import('@boredgame/pixi-renderer').DrawCardFn = useCallback(
     (g, card, w, h, faceUp, highlight) => {
       g.clear()
@@ -436,23 +414,34 @@ export const UnoView = ({
       canvasWidth: sW,
       cardWidth: CARD_W,
       cardHeight: CARD_H,
-      selectedCardId: null,
-      hoveredCardId: null,
       drawCard: drawUnoCard,
-      onCardClick: (cardId) => {
+      dropZoneX: discardX,
+      dropZoneY: tableY,
+      dropZoneWidth: CARD_W,
+      dropZoneHeight: CARD_H,
+      onCardHover: (cardId) => { setHoveredCardId(cardId) },
+      onCardDrop: (cardId) => {
         if (!isMyTurn) return
         const card = myHand.find((c) => c.id === cardId)
         if (!card) return
-        setSelectedCardId((prev) => {
-          if (cardId !== prev) {
-            handleCardClick(card)
-          }
-          return cardId === prev ? null : cardId
-        })
+        if (card.unoValue === 'wild' || card.unoValue === 'wild-draw-four') {
+          setPendingCardId(cardId)
+          setShowColorPicker(true)
+        } else {
+          sendAction({
+            type: 'play.card',
+            version: 1,
+            payload: { cardId },
+            meta: {
+              playerId,
+              timestamp: Date.now(),
+              actionId: `play:${playerId}:${cardId}:${String(Date.now())}`,
+            },
+          })
+        }
       },
-      onCardHover: (cardId) => { setHoveredCardId(cardId) },
     })
-  }, [state, myHand.length, myHand, sW, sH, centerX, drawUnoCard, isMyTurn, handleCardClick])
+  }, [state, myHand.length, myHand, sW, sH, centerX, drawUnoCard, isMyTurn, playerId, sendAction, discardX, tableY])
 
   useEffect(() => {
     handRef.current?.applyHighlight(hoveredCardId, selectedCardId)

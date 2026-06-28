@@ -17,11 +17,13 @@ export type HandRenderCurvedOptions = {
   canvasWidth: number
   cardWidth: number
   cardHeight: number
-  selectedCardId: string | null
-  hoveredCardId: string | null
   drawCard: DrawCardFn
-  onCardClick?: (cardId: string) => void
   onCardHover?: (cardId: string | null) => void
+  onCardDrop?: (cardId: string) => void
+  dropZoneX: number
+  dropZoneY: number
+  dropZoneWidth: number
+  dropZoneHeight: number
 }
 
 const CARD_CONTAINER_MAP = new Map<string, PIXI.Container>()
@@ -34,6 +36,22 @@ const PUSH_RADIUS = 3
 const PUSH_AMOUNT = 22
 const LIFT_HOVER = 16
 const LIFT_SELECT = 32
+let DROP_ZONE_X = 0
+let DROP_ZONE_Y = 0
+let DROP_ZONE_W = 60
+let DROP_ZONE_H = 90
+
+let dragCardId: string | null = null
+let dragCont: PIXI.Container | null = null
+let dragStartX = 0
+let dragStartY = 0
+let dragOrigX = 0
+let dragOrigY = 0
+let dragOrigZ = 0
+let isDragging = false
+let isOverDrop = false
+let dragUpHandler: ((e: PointerEvent) => void) | null = null
+let dragMoveHandler: ((e: PointerEvent) => void) | null = null
 
 export class Hand extends Collection<Card> {
   static _type = 'pixi:hand'
@@ -103,7 +121,6 @@ export class Hand extends Collection<Card> {
       cardWidth,
       cardHeight,
       drawCard,
-      onCardClick,
     } = opts
 
     CARD_WIDTH = cardWidth
@@ -112,6 +129,22 @@ export class Hand extends Collection<Card> {
     CARD_BASE.clear()
     CARD_POSITIONS.length = 0
     CARD_IDS.length = 0
+    DROP_ZONE_X = opts.dropZoneX
+    DROP_ZONE_Y = opts.dropZoneY
+    DROP_ZONE_W = opts.dropZoneWidth
+    DROP_ZONE_H = opts.dropZoneHeight
+    dragCardId = null
+    dragCont = null
+    isDragging = false
+    isOverDrop = false
+    if (dragUpHandler) {
+      window.removeEventListener('pointerup', dragUpHandler)
+      dragUpHandler = null
+    }
+    if (dragMoveHandler) {
+      window.removeEventListener('pointermove', dragMoveHandler)
+      dragMoveHandler = null
+    }
 
     const n = this.items.length
     if (n === 0) return
@@ -163,12 +196,20 @@ export class Hand extends Collection<Card> {
       cardContainer.addChild(g)
       drawCard(g, entry.card, cardWidth, cardHeight, true, false)
 
-      if (onCardClick) {
-        cardContainer.eventMode = 'static'
-        cardContainer.cursor = 'pointer'
-        const cid = entry.card.id
-        cardContainer.on('pointerdown', () => { onCardClick(cid) })
-      }
+      cardContainer.eventMode = 'static'
+      cardContainer.cursor = 'pointer'
+      const cid = entry.card.id
+      cardContainer.on('pointerdown', (e) => {
+        dragCardId = cid
+        dragCont = cardContainer
+        dragOrigX = cardContainer.x
+        dragOrigY = cardContainer.y
+        dragOrigZ = cardContainer.zIndex
+        dragStartX = e.globalX
+        dragStartY = e.globalY
+        isDragging = false
+        isOverDrop = false
+      })
 
       container.addChild(cardContainer)
       CARD_CONTAINER_MAP.set(entry.card.id, cardContainer)
@@ -176,6 +217,7 @@ export class Hand extends Collection<Card> {
 
     container.eventMode = 'static'
     container.on('pointermove', (e) => {
+      if (dragCont) return
       if (!opts.onCardHover) return
       const gp = e.getLocalPosition(container)
       let hitId: string | null = null
@@ -192,9 +234,52 @@ export class Hand extends Collection<Card> {
       }
       opts.onCardHover(hitId)
     })
-    container.on('pointerleave', () => {
-      opts.onCardHover?.(null)
-    })
+
+    dragUpHandler = () => {
+      if (isDragging && dragCardId && opts.onCardDrop) {
+        if (isOverDrop) {
+          opts.onCardDrop(dragCardId)
+        }
+      }
+      endDrag()
+    }
+    window.addEventListener('pointerup', dragUpHandler)
+
+    dragMoveHandler = (e: PointerEvent) => {
+      if (!dragCont) return
+      const dx = e.clientX - dragStartX
+      const dy = e.clientY - dragStartY
+
+      if (!isDragging && (Math.abs(dx) > 5 || Math.abs(dy) > 5)) {
+        isDragging = true
+        dragCont.zIndex = 9999
+      }
+
+      if (isDragging) {
+        dragCont.x = dragOrigX + dx
+        dragCont.y = dragOrigY + dy
+        dragCont.zIndex = 9999
+
+        isOverDrop = (
+          e.clientX >= DROP_ZONE_X && e.clientX <= DROP_ZONE_X + DROP_ZONE_W &&
+          e.clientY >= DROP_ZONE_Y && e.clientY <= DROP_ZONE_Y + DROP_ZONE_H
+        )
+      }
+    }
+    window.addEventListener('pointermove', dragMoveHandler)
+
+    function endDrag(): void {
+      if (dragCont) {
+        dragCont.x = dragOrigX
+        dragCont.y = dragOrigY
+        dragCont.zIndex = dragOrigZ
+        dragCont.rotation = 0
+      }
+      dragCardId = null
+      dragCont = null
+      isDragging = false
+      isOverDrop = false
+    }
   }
 
   private computePushes(
